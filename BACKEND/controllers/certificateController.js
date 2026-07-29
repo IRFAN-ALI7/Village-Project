@@ -1,6 +1,8 @@
 const Certificate = require("../models/Certificate");
 const expressError = require("../utils/expressError");
 const PDFDocument = require("pdfkit");
+const Activity = require("../models/Activity");
+const User = require("../models/User");
 
 const createCertificate = async(req, res)=> {
     let prefix = "";
@@ -60,6 +62,37 @@ const createCertificate = async(req, res)=> {
     const certificate = new Certificate(data);
     
     const saved = await certificate.save();
+
+    const user = await User.findById(req.userId);
+
+// User Activity
+await Activity.create({
+    user: req.userId,
+    audience: "user",
+    createdBy: "user",
+    type: "CERTIFICATE_APPLIED",
+    title: "Certificate Applied",
+    description: `Your ${saved.type} application has been submitted successfully.`,
+    route: "/my-certificates",
+    isNotification: true,
+    isRead: false,
+    priority: "urgent",
+    status: "pending",
+});
+
+// Admin Notification
+await Activity.create({
+    audience: "admin",
+    createdBy: "user",
+    type: "CERTIFICATE_APPLIED",
+    title: "New Certificate Request",
+    description: `${user.name} applied for ${saved.type}.`,
+    route: "/admin/certificates",
+    isNotification: true,
+    isRead: false,
+    priority: "urgent",
+    status: "pending",
+});
     res.status(201).json({
         message: "Certificate applied successfully!",
         data : saved
@@ -98,7 +131,19 @@ const approveCertificate = async(req,res)=> {
     certificate.issueDate = new Date();
 
      const updatedCertificate = await certificate.save();
-
+     await Activity.create({
+    user: certificate.userId,
+    audience: "user",
+    createdBy: "admin",
+    type: "CERTIFICATE_APPROVED",
+    title: "Certificate Approved",
+    description: `Your ${certificate.type} has been approved.`,
+    route: "/certificates",
+    isNotification: true,
+    isRead: false,
+    priority: "high",
+    status: "completed",
+});
     res.status(200).json({
         message: "Certificate approved successfully",
         data: updatedCertificate
@@ -126,7 +171,19 @@ const rejectCertificate = async(req,res)=> {
     if(!cert){
         throw new expressError(404, "Certificate not found");
     }
-
+    await Activity.create({
+    user: cert.userId,
+    audience: "user",
+    createdBy: "admin",
+    type: "CERTIFICATE_REJECTED",
+    title: "Certificate Rejected",
+    description: `Your ${cert.type} has been rejected.`,
+    route: "/certificates",
+    isNotification: true,
+    isRead: false,
+    priority: "high",
+    status: "rejected",
+});
     res.status(200).json({
         message: "Certificate Rejected",
         data: cert

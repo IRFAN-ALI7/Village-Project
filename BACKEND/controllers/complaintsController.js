@@ -1,6 +1,7 @@
 const Complaint = require("../models/Complaint");
 const expressError = require("../utils/expressError");
-
+const Activity = require("../models/Activity");
+const User = require("../models/User");
 
 module.exports.createComplaint = async(req,res)=> {
     const {
@@ -73,6 +74,38 @@ module.exports.createComplaint = async(req,res)=> {
             });
 
             await complaint.save();
+            const user = await User.findById(req.userId);
+           
+
+               // User Activity
+                   await Activity.create({
+                user: req.userId,
+                   audience: "user",
+                createdBy: "user",
+                 type: "COMPLAINT_SUBMITTED",
+                     title: "Complaint Submitted",
+                  description: `Your complaint (${complaintId}) has been submitted successfully.`,
+              route: "/my-complaints",
+                    isNotification: true,
+                      isRead: false,
+                priority: priority || "normal",
+                status: "pending",
+                  });
+
+                // Admin Notification
+                  await Activity.create({
+                   audience: "admin",
+                createdBy: "user",
+                   type: "COMPLAINT_SUBMITTED",
+                 title: "New Complaint Received",
+                  description: `${user.name} submitted a complaint.`,
+                  route: "/admin/complaints",
+                isNotification: true,
+                  isRead: false,
+                   priority: priority || "normal",
+                   status: "pending",
+               });
+
             res.json({
                 message: "Complaint submitted successfully",
                 complaintId

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Menu, Bell, ChevronDown, User, Edit, Lock, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import axios from "axios";
+import API_URL from "../../config/api";
 
 export default function AdminNavbar({ onMenuClick, pageTitle }) {
   const navigate = useNavigate();
@@ -13,12 +15,8 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
 
-  const notifications = [
-    { id: 1, text: 'New complaint registered', time: '5 min ago', unread: true },
-    { id: 2, text: 'User John Doe verified', time: '10 min ago', unread: true },
-    { id: 3, text: 'Certificate request approved', time: '1 hour ago', unread: false },
-    { id: 4, text: 'New scheme application', time: '2 hours ago', unread: false },
-  ];
+  const [notifications, setNotifications] = useState([]);
+   const [unreadCount, setUnreadCount] = useState(0);
 
   const [adminData, setAdminData] = useState({
     name: 'Admin Sharma',
@@ -34,8 +32,6 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
     newPassword: '',
     confirmPassword: '',
   });
-
-  const unreadCount = notifications.filter(n => n.unread).length;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -53,6 +49,30 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const fetchNotifications = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(
+      `${API_URL}/activity/admin`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setNotifications(res.data.activities);
+    setUnreadCount(res.data.unreadCount);
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+  }
+};
+
+useEffect(() => {
+  fetchNotifications();
+}, []);
   
   return (
     <>
@@ -98,15 +118,18 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.map((notif) => (
                       <div
-                        key={notif.id}
+                        key={notif._id}
                         className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                          notif.unread ? 'bg-blue-50' : ''
+                          !notif.isRead ? 'bg-blue-50' : ''
                         }`}
                       >
-                        <p className={`text-sm ${notif.unread ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
-                          {notif.text}
+                        <p className={`text-sm ${!notif.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
+                          {notif.title}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                           {notif.description}
+                            </p>
+                        <p className="text-xs text-gray-400 mt-1">{ new Date(notif.createdAt).toLocaleDateString() }</p>
                       </div>
                     ))}
                   </div>

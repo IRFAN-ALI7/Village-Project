@@ -9,6 +9,7 @@ const noticeRoutes = require("./routes/noticeRoute");
 const certificateRoutes = require("./routes/certificateRoutes");
 const schemeRoutes = require("./routes/schemeRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const activityRoutes = require("./routes/activityRoute");
 const cors = require("cors");
 const port = process.env.PORT;
 connectDB();
@@ -24,6 +25,8 @@ app.use("/api", noticeRoutes);
 app.use("/", certificateRoutes);
 app.use("/schemes",schemeRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/activity", activityRoutes);
+
 
 app.use((err,req,res,next)=> {
     console.log(err.message);

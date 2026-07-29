@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const User = require("../models/User");
 const Complaint = require("../models/Complaint");
+const Activity = require("../models/Activity");
 
   const registerUser = async(req,res)=> {
     const mobile = req.body.mobile;
@@ -22,6 +23,35 @@ const Complaint = require("../models/Complaint");
     }
     
        await user.save();
+
+       // User Activity
+         await Activity.create({
+       user: user._id,
+        audience: "user",
+       createdBy: "user",
+       type: "REGISTERED",
+      title: "Registration Successful",
+       description: "Your account has been created successfully.",
+        route: "/dashboard",
+       isNotification: true,
+        isRead: false,
+       priority: "low",
+        status: "completed",
+      });
+
+// Admin Notification
+await Activity.create({
+  audience: "admin",
+  createdBy: "user",
+  type: "REGISTERED",
+  title: "New User Registered",
+  description: `${user.name} has registered successfully.`,
+  route: "/admin/users",
+  isNotification: true,
+  isRead: false,
+  priority: "low",
+  status: "completed",
+});
 
     const token = jwt.sign(
     {
@@ -50,6 +80,20 @@ const Complaint = require("../models/Complaint");
   if(!isMatch){
           throw new expressError(404,"wrong password!");
   }
+
+  await Activity.create({
+  user: user._id,
+  audience: "user",
+  createdBy: "user",
+  type: "LOGIN",
+  title: "Login Successful",
+  description: "You logged into your account.",
+  route: "/dashboard",
+  isNotification: false,
+  isRead: true,
+  priority: "low",
+  status: "completed",
+});
 
   const token = jwt.sign(
     {
@@ -83,14 +127,52 @@ const Complaint = require("../models/Complaint");
               req.body,
                {new: true, runValidators: true}
            );
+
+           await Activity.create({
+            user: req.userId,
+         audience: "user",
+        createdBy: "user",
+        type: "PROFILE_UPDATED",
+        title: "Profile Updated",
+         description: "Your profile information has been updated.",
+           route: "/profile",
+           isNotification: false,
+            isRead: true,
+          priority: "low",
+         status: "completed",
+      });
            res.json(updateUser);
     };
 
-    const deleteUsers = async(req,res,next)=> {
-        await Complaint.deleteMany({userId: req.userId});
-          await User.findByIdAndDelete(req.userId);
-        res.json({message: "Account deleted successfully!"});
-    };
+  const deleteUsers = async (req, res, next) => {
+  const user = await User.findById(req.userId);
+  if (!user) {
+    throw new expressError(404, "User not found");
+  }
+  // Admin Notification
+  await Activity.create({
+    audience: "admin",
+    createdBy: "user",
+    type: "ACCOUNT_DELETED",
+    title: "User Account Deleted",
+    description: `${user.name} has permanently deleted the account.`,
+    route: "/admin/users",
+    isNotification: true,
+    isRead: false,
+    priority: "high",
+    status: "completed",
+  });
+
+  // Delete user's complaints
+  await Complaint.deleteMany({ userId: req.userId });
+
+  // Delete user account
+  await User.findByIdAndDelete(req.userId);
+
+  res.json({
+    message: "Account deleted successfully!",
+  });
+};
 
     const changePassword = async(req,res)=> {
         const {currentPassword, newPassword} = req.body;
@@ -106,6 +188,19 @@ const Complaint = require("../models/Complaint");
     
             user.password = newPassword;
             await user.save();
+            await Activity.create({
+              user: user._id,
+             audience: "user",
+           createdBy: "user",
+            type: "PASSWORD_CHANGED",
+            title: "Password Changed",
+          description: "Your account password has been changed.",
+             route: "/profile",
+               isNotification: true,
+                isRead: false,
+              priority: "high",
+            status: "completed",
+             });
             res.status(200).json({message: "Password changed successfully!"});
     }
 
@@ -117,6 +212,20 @@ const Complaint = require("../models/Complaint");
     }
     user.password = newPassword;
     await user.save();
+
+    await Activity.create({
+  user: user._id,
+  audience: "user",
+  createdBy: "user",
+  type: "PASSWORD_CHANGED",
+  title: "Password Reset Successfully",
+  description: "Your account password has been reset successfully.",
+  route: "/profile",
+  isNotification: true,
+  isRead: false,
+  priority: "high",
+  status: "completed",
+});
     res.status(200).json({
       message: "Password Changed successfully"
     });

@@ -1,4 +1,5 @@
 const Scheme = require("../models/Scheme");
+const Activity = require("../models/Activity");
 
 const addScheme = async(req, res) => {
     const { 
@@ -26,6 +27,18 @@ const addScheme = async(req, res) => {
         documents
      });
     
+     await Activity.create({
+    audience: "all",
+    createdBy: "admin",
+    type: "NEW_SCHEME",
+    title: "New Government Scheme",
+    description: `${newScheme.name} has been added.`,
+    route: "/schemes",
+    isNotification: true,
+    isRead: false,
+    priority: "medium",
+    status: "completed",
+});
     res.status(200).json({
         message: "Scheme added successfully",
         scheme: newScheme

@@ -35,6 +35,7 @@ export default function AdminSidebar({ isOpen, onClose, activeSection, onSection
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
       localStorage.removeItem("token");
+      localStorage.removeItem("adminName");
       navigate('/admin/login');
     }
   };

@@ -4,11 +4,14 @@ const Notice = require("../models/Notice");
 const User = require("../models/User");
 
 const getDashboard = async (req, res) => {
-  const totalComplaints = await Complaint.countDocuments();
+  const totalComplaints = await Complaint.countDocuments({
+  userId: req.userId,
+});
 
   const resolvedComplaints = await Complaint.countDocuments({
-    status: "resolved",
-  });
+  userId: req.userId,
+  status: "resolved",
+});
 
   const myComplaints = await Complaint.countDocuments({
     userId: req.userId,

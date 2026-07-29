@@ -1,5 +1,5 @@
 const Notice = require("../models/Notice");
-
+const Activity = require("../models/Activity");
 
 
 const createNotice = async(req,res)=> {
@@ -19,6 +19,18 @@ const createNotice = async(req,res)=> {
         createdBy: req.userId
     });
     await notice.save();
+    await Activity.create({
+    audience: "all",
+    createdBy: "admin",
+    type: "NEW_NOTICE",
+    title: "New Notice Published",
+    description: `${notice.title} has been published.`,
+    route: "/notices",
+    isNotification: true,
+    isRead: false,
+    priority: "urgent",
+    status: "completed",
+});
     res.status(201).json({
         message: "Notice created successfully",
     });

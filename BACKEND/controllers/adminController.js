@@ -4,6 +4,7 @@ const expressError = require("../utils/expressError");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Complaint = require("../models/Complaint");
+const Activity = require("../models/Activity");
 
 
   const registerAdmin = async(req,res)=> {
@@ -115,6 +116,53 @@ const Complaint = require("../models/Complaint");
       complaint.rejectedAt = new Date();
     }
     await complaint.save();
+    if (status === "in-progress") {
+  await Activity.create({
+    user: complaint.userId,
+    audience: "user",
+    createdBy: "admin",
+    type: "COMPLAINT_IN_PROGRESS",
+    title: "Complaint In Progress",
+    description: "Your complaint is being processed.",
+    route: "/my-complaints",
+    isNotification: true,
+    isRead: false,
+    priority: "normal",
+    status: "pending",
+  });
+}
+
+if (status === "resolved") {
+  await Activity.create({
+    user: complaint.userId,
+    audience: "user",
+    createdBy: "admin",
+    type: "COMPLAINT_RESOLVED",
+    title: "Complaint Resolved",
+    description: "Your complaint has been resolved successfully.",
+    route: "/my-complaints",
+    isNotification: true,
+    isRead: false,
+    priority: "high",
+    status: "completed",
+  });
+}
+
+if (status === "rejected") {
+  await Activity.create({
+    user: complaint.userId,
+    audience: "user",
+    createdBy: "admin",
+    type: "COMPLAINT_REJECTED",
+    title: "Complaint Rejected",
+    description: `Your complaint has been rejected. Reason: ${reasons}`,
+    route: "/my-complaints",
+    isNotification: true,
+    isRead: false,
+    priority: "high",
+    status: "rejected",
+  });
+}
     
     res.status(200).json({
        message: "Status updated successfully"
@@ -135,6 +183,19 @@ const Complaint = require("../models/Complaint");
       if(!updateUser){
         throw new expressError(404, "User not found");
       }
+          await Activity.create({
+          user: updateUser._id,
+            audience: "user",
+         createdBy: "admin",
+          type: "PROFILE_UPDATED",
+             title: "Profile Updated",
+             description: "Your profile has been updated by the administrator.",
+          route: "/profile",
+           isNotification: true,
+          isRead: false,
+          priority: "normal",
+         status: "completed",
+      });
       res.status(200).json({
         message: 'User updated successfully!',
         user: updateUser,

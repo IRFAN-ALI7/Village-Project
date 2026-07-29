@@ -1,107 +1,150 @@
-import { LayoutDashboard, FileText, User, LogOut, Megaphone, Gift, X, CreditCard, Home } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { LayoutDashboard, FileText, ClipboardList, Gift, CreditCard, Megaphone, Bell, User, LogOut, X, Home } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router';
+import { useState, useEffect } from 'react';
+import axios from "axios";
+import API_URL from "../../config/api";
+
+
+const menuItems = [
+  { id: 'dashboard',     label: 'Dashboard',          icon: LayoutDashboard, path: '/dashboard' },
+  { id: 'complaint',     label: 'File Complaint',      icon: FileText,        path: '/complaint' },
+  { id: 'my-complaints', label: 'My Complaints',       icon: ClipboardList,   path: '/my-complaints' },
+  { id: 'schemes',       label: 'Government Schemes',  icon: Gift,            path: '/schemes' },
+  { id: 'certificates',  label: 'Certificates',        icon: CreditCard,      path: '/certificates' },
+  { id: 'notices',       label: 'Notice Board',        icon: Megaphone,       path: '/notices' },
+  { id: 'notifications', label: 'Notifications',       icon: Bell,            path: '/notifications' },
+  { id: 'profile',       label: 'My Profile',          icon: User,            path: '/profile' },
+];
 
 export default function UserSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState('dashboard');
+  const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { id: 'complaint', label: 'File Complaint', icon: FileText, path: '/complaint' },
-    { id: 'my-complaints', label: 'My Complaints', icon: FileText, path: '/my-complaints' },
-    { id: 'schemes', label: 'Government Schemes', icon: Gift, path: '/schemes' },
-    { id: 'certificates', label: 'Certificates', icon: CreditCard, path: '/certificates' },
-    { id: 'notices', label: 'Notice Board', icon: Megaphone, path: '/notices' },
-    { id: 'profile', label: 'My Profile', icon: User, path: '/profile' },
-  ];
-
-  const handleNavigation = (id, path) => {
-    setActiveItem(id);
+  const handleNav = (path) => {
     navigate(path);
     onClose();
   };
+  const fetchUnreadCount = async () => {
+  try {
+    const token = localStorage.getItem("token");
 
-  const handleLogout = (e)=> {
-    e.preventDefault();
-    localStorage.removeItem("token");
-    navigate("/login");
+    const res = await axios.get(`${API_URL}/activity/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setUnreadCount(res.data.unreadCount);
+  } catch (error) {
+    console.log(error.response?.data?.message || error.message);
   }
+};
+useEffect(() => {
+  fetchUnreadCount();
+}, []);
+
+ const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  onClose();
+  navigate("/", { replace: true });
+};
 
   return (
     <>
+      {/* Overlay */}
+      <div
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
+
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-80 bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 text-white z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } shadow-2xl`}
+        }`}
       >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-white/20">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
-                  <Home className="h-6 w-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold">Smart Village</h2>
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 px-6 py-5 flex items-center justify-between shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 p-2 rounded-xl">
+              <Home className="h-5 w-5 text-white" />
             </div>
-
-            {/* User Profile */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  RK
-                </div>
-                <div>
-                  <h3 className="font-bold text-white">Rajesh Kumar</h3>
-                  <p className="text-sm text-white/80">Village Member</p>
-                </div>
-              </div>
+            <div>
+              <h2 className="text-white font-bold text-lg leading-tight">Smart Village</h2>
+              <p className="text-white/70 text-xs">Digital Service Portal</p>
             </div>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <X className="h-5 w-5 text-white" />
+          </button>
+        </div>
 
-          {/* Menu Items */}
-          <nav className="flex-1 p-6 overflow-y-auto">
-            <div className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeItem === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigation(item.id, item.path)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-white text-green-600 shadow-lg font-semibold'
-                        : 'bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 border border-white/20'
-                    }`}
-                  >
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-green-600' : 'text-white'}`} />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                );
-              })}
+        {/* User Profile Card */}
+        <div className="px-4 py-4 border-b border-gray-100 shrink-0">
+          <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-3">
+            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-base shadow">
+              RK
             </div>
-          </nav>
-
-          {/* Footer - Logout */}
-          <div className="p-6 border-t border-white/20">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl bg-red-500/90 hover:bg-red-600 transition-all shadow-lg font-semibold"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Logout</span>
-            </button>
+            <div>
+              <p className="font-semibold text-gray-800 text-sm">Rajesh Kumar</p>
+              <p className="text-xs text-gray-500">Village Member</p>
+            </div>
           </div>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Main Menu</p>
+          <div className="space-y-1">
+            {menuItems.map(item => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNav(item.path)}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-md shadow-green-200'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-green-600'}`} />
+                  <span className={`font-medium text-sm ${isActive ? 'text-white' : ''}`}>{item.label}</span>
+                 {item.id === "notifications" && unreadCount > 0 && (
+                     <span
+                     className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${
+                    isActive
+                   ? "bg-white/20 text-white"
+                    : "bg-red-100 text-red-600"
+                  }`}
+                   >
+                 {unreadCount}
+                  </span>
+                )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Logout */}
+        <div className="px-3 py-4 border-t border-gray-100 shrink-0">
+          <button
+           onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-200 group"
+          >
+            <LogOut className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+            <span className="font-semibold text-sm">Logout</span>
+          </button>
         </div>
       </aside>
     </>

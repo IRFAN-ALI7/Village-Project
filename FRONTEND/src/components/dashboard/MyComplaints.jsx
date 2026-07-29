@@ -10,7 +10,6 @@ export default function MyComplaints() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const itemsPerPage = 10;
-  console.log(complaints);
 
     // Mock data - replace with actual API call
 useEffect(()=> {

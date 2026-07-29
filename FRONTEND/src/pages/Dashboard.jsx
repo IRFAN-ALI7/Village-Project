@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import  UserSidebar  from '../components/dashboard/UserSidebar';
+import  DashboardNavbar  from '../components/dashboard/DashboardNavbar';
 import  DashboardFooter  from '../components/dashboard/DashboardFooter';
-import { FileText, ClipboardList, Gift, TrendingUp, Users, Bell, Megaphone, Menu, PhoneCall, X, Check } from 'lucide-react';
+import { FileText, ClipboardList, Gift, TrendingUp, Users, Bell, Megaphone, X, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
   const [user, setUser] = useState();
   const [dashboard, setDashboard] = useState({
@@ -60,13 +58,6 @@ export default function Dashboard() {
   useEffect(()=> {
     fetchDashboardData();
   }, []);
-
-  const notifications = [
-    { id: 1, title: 'New Scheme Available', message: 'PM-KISAN Yojana registration is now open', time: '2 hours ago', unread: true },
-    { id: 2, title: 'Complaint Update', message: 'Your complaint #1234 has been resolved', time: '5 hours ago', unread: true },
-    { id: 3, title: 'Village Meeting', message: 'Community meeting scheduled for tomorrow', time: '1 day ago', unread: false },
-    { id: 4, title: 'New Notice', message: 'Water supply maintenance notice', time: '2 days ago', unread: false },
-  ];
 
   const stats = [
     {
@@ -171,55 +162,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-purple-50">
       {/* Top Navbar with Hamburger */}
-      <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-lg">
-        <div className="px-4 md:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Hamburger Menu Button */}
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Menu className="h-6 w-6 text-gray-700" />
-              </button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                User Dashboard
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Bell className="h-6 w-6 text-gray-700" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="hidden md:flex items-center space-x-3 bg-gradient-to-r from-green-100 to-blue-100 px-4 py-2 rounded-full">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
-                  RK
-                </div>
-                <span className="font-semibold text-gray-800">{user?.name}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
 
-      {/* Sidebar */}
-      <UserSidebar 
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
-
-      {/* Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
+      <DashboardNavbar pageTitle='User Dashboard' />
       {/* Main Content */}
       <main className="px-4 md:px-8 py-8">
         <div className="max-w-7xl mx-auto">
@@ -370,79 +314,6 @@ export default function Dashboard() {
 
       <DashboardFooter />
 
-      {/* Notifications Dropdown */}
-      {showNotifications && (
-        <div className="fixed top-20 right-4 md:right-8 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Bell className="h-6 w-6" />
-              <h3 className="text-lg font-bold">Notifications</h3>
-              <span className="bg-white/20 px-2 py-1 rounded-full text-xs font-semibold">
-                {notifications.filter(n => n.unread).length} New
-              </span>
-            </div>
-            <button
-              onClick={() => setShowNotifications(false)}
-              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                  notification.unread ? 'bg-blue-50/50' : ''
-                }`}
-              >
-                <div className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-lg ${
-                    notification.unread 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    <Bell className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <h4 className={`font-semibold text-gray-800 ${
-                        notification.unread ? 'font-bold' : ''
-                      }`}>
-                        {notification.title}
-                      </h4>
-                      {notification.unread && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                    <p className="text-xs text-gray-400 mt-2">{notification.time}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="p-3 bg-gray-50 border-t border-gray-200">
-            <button
-              onClick={() => {
-                setShowNotifications(false);
-                navigate('/notices');
-              }}
-              className="w-full text-center text-green-600 font-semibold hover:text-green-700 transition-colors text-sm"
-            >
-              View All Notifications
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Notification Overlay */}
-      {showNotifications && (
-        <div 
-          className="fixed inset-0 z-40"
-          onClick={() => setShowNotifications(false)}
-        />
-      )}
 
       {/* All Activities Modal */}
       {showAllActivities && (

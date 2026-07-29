@@ -4,19 +4,20 @@ import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import ComplaintPage from "./pages/ComplaintPage";
 import MyComplaintsPage from "./pages/MyComplaintsPage";
+import UserNotificationPage from "./pages/UserNotificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute.";
 import AuthRoute from "./components/AuthRoute";
 import NoticePage from "./pages/NoticePage";
+import HomePage from "./pages/HomePage";
+import RegistrationPage from "./pages/RegistrationPage";
+import CertificatesPage from "./pages/CertificatesPages";
+import SchemesPage from "./pages/SchemesPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
-import HomePage from "./pages/HomePage";
-import RegistrationPage from "./pages/RegistrationPage";
-import CertificatesPage from "./pages/CertificatesPages";
-import SchemesPage from "./pages/SchemesPage";
 import AdminSchemesPage from "./pages/admin/AdminSchemesPage";
 import AdminNoticesPage from "./pages/admin/AdminNoticesPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
@@ -108,6 +109,14 @@ function App() {
           <SchemesPage/>
       }
       />
+        <Route
+        path="/notifications"
+        element = {
+          <ProtectedRoute>
+            <UserNotificationPage/>
+          </ProtectedRoute>
+        }
+        />
 
          <Route
           path="/profile"
