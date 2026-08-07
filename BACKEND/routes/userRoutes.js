@@ -1,5 +1,6 @@
 const express = require("express");
 const wrapAsync = require("../utils/wrapAsync");
+const upload = require("../middlewares/cloudinaryStorage");
 const { 
     registerUser,
      loginUser,
@@ -15,8 +16,16 @@ const router = express.Router();
 const {protect, userOnly} = require("../middlewares/protect");
 const { userValidate } = require("../middlewares/Validation");
 
-router.post("/register",userValidate, wrapAsync(registerUser));
-router.post("/login",wrapAsync(loginUser) );
+router.post(
+  "/register",
+  upload.single("profileImage"),
+  userValidate,
+  wrapAsync(registerUser)
+);
+router.post(
+    "/login",
+    wrapAsync(loginUser)
+ );
 
 //Read route
 router.get("/profile",protect, userOnly,wrapAsync(getProfile));
@@ -27,7 +36,13 @@ router.get("/me", protect, userOnly,wrapAsync(getCurrUser));
 router.put("/change-password",protect,userOnly,wrapAsync(changePassword));
 
 //Update
-router.put("/:id",protect,userOnly,wrapAsync(updateUsers));
+router.put(
+  "/:id",
+  protect,
+  userOnly,
+  upload.single("profileImage"),
+  wrapAsync(updateUsers)
+);
 
 //Delete
 router.delete("/:id",protect, userOnly, wrapAsync(deleteUsers));

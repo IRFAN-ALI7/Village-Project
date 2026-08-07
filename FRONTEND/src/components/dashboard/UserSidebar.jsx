@@ -20,6 +20,7 @@ export default function UserSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [user, setUser] = useState(null);
 
   const handleNav = (path) => {
     navigate(path);
@@ -40,10 +41,27 @@ export default function UserSidebar({ isOpen, onClose }) {
     console.log(error.response?.data?.message || error.message);
   }
 };
+
+const fetchUser = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(`${API_URL}/user/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setUser(res.data);
+  } catch (error) {
+    console.log(error.response?.data?.message || error.message);
+  }
+};
+
 useEffect(() => {
   fetchUnreadCount();
+  fetchUser();
 }, []);
-
  const handleLogout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -90,12 +108,26 @@ useEffect(() => {
         {/* User Profile Card */}
         <div className="px-4 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-3">
-            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-base shadow">
-              RK
-            </div>
+            <div className="h-11 w-11 rounded-full overflow-hidden bg-gray-200 shadow">
+             {user?.profileImage ? (
+                      <img
+                 src={user.profileImage}
+                 alt={user?.name}
+                className="w-full h-full object-cover"
+             />
+            ) : (
+                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold">
+                   {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+                    )}
+              </div>
             <div>
-              <p className="font-semibold text-gray-800 text-sm">Rajesh Kumar</p>
-              <p className="text-xs text-gray-500">Village Member</p>
+            <p className="font-semibold text-gray-800 text-sm">
+             {user?.name}
+           </p>
+              <p className="text-xs text-gray-500">
+                 {user?.village}, {user?.panchayat}
+                </p>
             </div>
           </div>
         </div>

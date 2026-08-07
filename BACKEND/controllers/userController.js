@@ -11,6 +11,9 @@ const Activity = require("../models/Activity");
     const mobile = req.body.mobile;
     const email = req.body.email;
     const user = new User(req.body);
+    if (req.file) {
+  user.profileImage = req.file.path;
+}
     const existEmail = await User.findOne({email});
 
     const existingUser = await User.findOne({mobile});
@@ -120,29 +123,37 @@ await Activity.create({
         res.json(user);
     };
 
-   const updateUsers = async(req,res,next)=> {
-           const updateUser = await
-            User.findByIdAndUpdate
-            (req.userId,
-              req.body,
-               {new: true, runValidators: true}
-           );
+const updateUsers = async (req, res, next) => {
 
-           await Activity.create({
-            user: req.userId,
-         audience: "user",
-        createdBy: "user",
-        type: "PROFILE_UPDATED",
-        title: "Profile Updated",
-         description: "Your profile information has been updated.",
-           route: "/profile",
-           isNotification: false,
-            isRead: true,
-          priority: "low",
-         status: "completed",
-      });
-           res.json(updateUser);
-    };
+  if (req.file) {
+    req.body.profileImage = req.file.path;
+  }
+
+  const updateUser = await User.findByIdAndUpdate(
+    req.userId,
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  await Activity.create({
+    user: req.userId,
+    audience: "user",
+    createdBy: "user",
+    type: "PROFILE_UPDATED",
+    title: "Profile Updated",
+    description: "Your profile information has been updated.",
+    route: "/profile",
+    isNotification: false,
+    isRead: true,
+    priority: "low",
+    status: "completed",
+  });
+
+  res.json(updateUser);
+};
 
   const deleteUsers = async (req, res, next) => {
   const user = await User.findById(req.userId);

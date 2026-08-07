@@ -115,7 +115,6 @@ export default function DashboardContent() {
       });
       const data = await res.json();
       if(res.ok){
-        console.log(data);
         setRecentComplaints(data.recentComplaints);
         setTotalComplaints(data.total);
       }else{

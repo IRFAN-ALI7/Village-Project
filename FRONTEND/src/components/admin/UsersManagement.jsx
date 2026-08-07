@@ -49,21 +49,23 @@ export default function UsersManagement() {
   };
 
   const handleUpdateUser = async() => {
-    if (!selectedUser ||
-       !selectedUser.name ||
-       !selectedUser.mobile ||
-       !selectedUser.address ||
-       !selectedUser.village ||
-       !selectedUser.wardNo ||
-       !selectedUser.postOffice ||
-       !selectedUser.policeStation ||
-       !selectedUser.district ||
-       !selectedUser.state ||
-       !selectedUser.pincode
-    ) {
-      toast.error('Please fill all required fields!');
-      return;
-    };
+    if (
+        !selectedUser ||
+        !selectedUser.name ||
+        !selectedUser.mobile ||
+        !selectedUser.address ||
+        !selectedUser.panchayat ||
+        !selectedUser.village ||
+        !selectedUser.wardNo ||
+        !selectedUser.postOffice ||
+        !selectedUser.policeStation ||
+        !selectedUser.district ||
+        !selectedUser.state ||
+        !selectedUser.pincode
+     ) {
+       toast.error('Please fill all required fields!');
+       return;
+       }
       try{
         const token = localStorage.getItem("token");
         const res = await fetch(`${API_URL}/admin/users/${selectedUser._id}`, {
@@ -344,6 +346,14 @@ export default function UsersManagement() {
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div>
+                        <p className="text-sm text-gray-500 font-semibold mb-1">
+                        Panchayat
+                        </p>
+                        <p className="text-gray-900 font-semibold">
+                      {selectedUser.panchayat}
+                      </p>
+                      </div>
+                    <div>
                       <p className="text-sm text-gray-500 font-semibold mb-1">Village</p>
                       <p className="text-gray-900 font-semibold">{selectedUser.village}</p>
                     </div>
@@ -443,6 +453,23 @@ export default function UsersManagement() {
                   />
                 </div>
               </div>
+
+              <div>
+                 <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Panchayat
+               </label>
+                  <input
+                  type="text"
+                value={selectedUser.panchayat || ""}
+                  onChange={(e) =>
+                  setSelectedUser({
+                    ...selectedUser,
+                  panchayat: e.target.value
+                  })
+                 }
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  />
+                 </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

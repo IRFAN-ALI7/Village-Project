@@ -13,6 +13,7 @@ export default function DashboardNavbar({ pageTitle = 'Smart Village Portal' }) 
   const notifRef = useRef(null);
 
  const [notifications, setNotifications] = useState([]);
+ const [user, setUser] = useState(null);
  const unreadCount = notifications.filter(n => !n.isRead).length;
 
  const fetchNotifications = async () => {
@@ -26,6 +27,21 @@ export default function DashboardNavbar({ pageTitle = 'Smart Village Portal' }) 
     });
     setNotifications(res.data.activities);
 
+  } catch (error) {
+    console.log(error.response?.data?.message || error.message);
+  }
+};
+const fetchUser = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(`${API_URL}/user/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setUser(res.data);
   } catch (error) {
     console.log(error.response?.data?.message || error.message);
   }
@@ -70,6 +86,7 @@ const markNotificationAsRead = async (id) => {
 
   useEffect(() => {
   fetchNotifications();
+  fetchUser();
 }, []);
 
   return (
@@ -159,10 +176,20 @@ const markNotificationAsRead = async (id) => {
               )}
             </div>
 
-            {/* Avatar only — no dropdown */}
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold shadow-lg select-none">
-              RK
-            </div>
+{/* Avatar only — no dropdown */}
+<div className="h-10 w-10 rounded-full overflow-hidden shadow-lg bg-gray-200">
+  {user?.profileImage ? (
+    <img
+      src={user.profileImage}
+      alt={user.name || "User"}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <div className="h-full w-full flex items-center justify-center text-gray-600 font-bold">
+      {user?.name?.charAt(0)?.toUpperCase() || "U"}
+    </div>
+  )}
+</div>
 
           </div>
         </div>

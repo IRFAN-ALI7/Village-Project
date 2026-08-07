@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import  DashboardNavbar  from '../components/dashboard/DashboardNavbar';
 import  DashboardFooter  from '../components/dashboard/DashboardFooter';
+import  Weather  from '../components/dashboard/Weather';
 import { FileText, ClipboardList, Gift, TrendingUp, Users, Bell, Megaphone, X, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../config/api';
@@ -231,38 +232,9 @@ export default function Dashboard() {
             })}
           </div>
 
-          {/* Recent Activity */}
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Recent Activity</h2>
-              <button 
-                onClick={() => setShowAllActivities(true)}
-                className="text-green-600 font-semibold hover:text-green-700 transition-colors"
-              >
-                View All
-              </button>
-            </div>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => {
-                const Icon = activity.icon;
-                return (
-                  <div
-                    key={activity.id}
-                    onClick={() => handleActivityClick(activity)}
-                    className="flex items-center space-x-4 p-4 bg-white/50 rounded-xl hover:bg-white/80 transition-all cursor-pointer border border-white/30"
-                  >
-                    <div className="bg-gradient-to-br from-green-100 to-blue-100 p-3 rounded-lg">
-                      <Icon className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-800">{activity.title}</p>
-                      <p className="text-sm text-gray-600">{activity.time}</p>
-                    </div>
-                    <Bell className="h-5 w-5 text-gray-400" />
-                  </div>
-                );
-              })}
-            </div>
+            {/* Weather Section */}
+          <div className="mb-8">
+            <Weather />
           </div>
 
           {/* Additional Info Cards */}

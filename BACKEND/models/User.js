@@ -1,42 +1,111 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const { string } = require("joi");
-const userSchema = new mongoose.Schema({
-    name: String,
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     mobile: {
-        type: String,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
+      match: /^[0-9]{10}$/,
     },
-    email:{
-        type: String,
-        unique: true,
+
+    email: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+      default: "",
     },
+
+    profileImage: {
+      type: String,
+      default: "",
+    },
+
     address: {
-        type: String,
+      type: String,
+      required: true,
+      trim: true,
     },
-    village: String,
-    wardNo: Number,
-    postOffice: String,
-    policeStation: String,
-    district: String,
-    state: String,
-    pincode: Number,
-    password: String,
+
+     panchayat: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    village: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    wardNo: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    postOffice: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    policeStation: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    district: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    pincode: {
+      type: Number,
+      required: true,
+      min: 100000,
+      max: 999999,
+    },
+
+    password: {
+      type: String,
+      required: true,
+      minlength: 4,
+    },
+
     status: {
-        type: String,
-        enum: ["active", "inactive"],
-        default: "active",
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
     },
-}, {timestamps: true});
+  },
+  {
+    timestamps: true,
+  }
+);
 
-userSchema.pre("save", async function(){
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-    if(!this.isModified("password")){
-        return;
-    }
-    const hashedPassword = await bcrypt.hash(this.password,10);
-    this.password = hashedPassword;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
-const User = mongoose.model("User", userSchema);
-module.exports= User;
+module.exports = mongoose.model("User", userSchema);

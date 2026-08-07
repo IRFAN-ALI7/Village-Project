@@ -1,25 +1,31 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { 
-  UserPlus, 
-  User, 
-  Phone, 
-  Lock, 
-  MapPin, 
-  Building2, 
-  Home, 
-  Mail, 
-  Eye, 
+import API_URL from '../config/api';
+import {
+  UserPlus,
+  User,
+  Phone,
+  Lock,
+  MapPin,
+  Building2,
+  Home,
+  Mail,
+  Eye,
   EyeOff,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  Camera
 } from 'lucide-react';
-import villageImg from "../assets/villageImg.png";
-import API_URL from '../config/api';
 
+import villageImg from "../assets/villageImg.png";
 export default function RegistrationPage() {
   const navigate = useNavigate();
+  const fileRef = useRef(null);
   const [showPassword, setShowPassword] = useState(false);
+ const [profilePic, setProfilePic] = useState({
+  preview: "",
+  file: null,
+});
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
@@ -35,25 +41,60 @@ export default function RegistrationPage() {
     password: '',
   });
 
-   const handleSubmit = async(e) => {
-    e.preventDefault();
+const handleProfilePic = (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  const previewUrl = URL.createObjectURL(file);
+
+  setProfilePic({
+    preview: previewUrl,
+    file: file,
+  });
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const data = new FormData();
+
+    data.append("profileImage", profilePic.file);
+
+    data.append("name", formData.name);
+    data.append("mobile", formData.mobile);
+    data.append("email", formData.email);
+    data.append("address", formData.address);
+    data.append("panchayat", formData.panchayat);
+    data.append("village", formData.village);
+    data.append("wardNo", formData.wardNo);
+    data.append("postOffice", formData.postOffice);
+    data.append("policeStation", formData.policeStation);
+    data.append("district", formData.district);
+    data.append("state", formData.state);
+    data.append("pincode", formData.pincode);
+    data.append("password", formData.password);
 
     const res = await fetch(`${API_URL}/user/register`, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(formData)
+      method: "POST",
+      body: data,
     });
-    const data = await res.json();
-    if(res.ok){
-      alert(data.message);
-      localStorage.setItem("token", data.token);
-    navigate('/dashboard');
-    }else{
-      alert(data.message);
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert(result.message);
+      localStorage.setItem("token", result.token);
+      navigate("/dashboard");
+    } else {
+      alert(result.message);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Server Error");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 flex items-center justify-center p-4">
@@ -68,7 +109,7 @@ export default function RegistrationPage() {
               <ArrowLeft className="h-5 w-5" />
               <span>Back to Home</span>
             </button>
-            
+
             <div className="flex items-center space-x-3">
               <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
                 <Home className="h-12 w-12 text-white" />
@@ -91,7 +132,7 @@ export default function RegistrationPage() {
             <p className="text-white/90 text-lg mb-6">
               Register now to access all village services and stay connected with your community.
             </p>
-            
+
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0" />
@@ -133,6 +174,31 @@ export default function RegistrationPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Profile Photo */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative group">
+                <div
+                  onClick={() => fileRef.current?.click()}
+                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 hover:border-green-500 bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden transition-all"
+                >
+                  {profilePic.preview
+                    ? <img src={profilePic.preview} alt="Profile" className="w-full h-full object-cover" />
+                    : <Camera className="h-8 w-8 text-gray-400 group-hover:text-green-500 transition-colors" />
+                  }
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 bg-green-500 hover:bg-green-600 text-white rounded-full p-1.5 shadow-md transition-colors"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500">Click to upload profile photo</p>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleProfilePic} />
+            </div>
+
             {/* Personal Information */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b-2 border-green-500">
@@ -217,6 +283,22 @@ export default function RegistrationPage() {
                   />
                 </div>
               </div>
+
+           <div>
+               <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Panchayat Name <span className="text-red-600">*</span>
+           </label>
+          <input
+          type="text"
+          required
+           value={formData.panchayat}
+         onChange={(e) =>
+          setFormData({ ...formData, panchayat: e.target.value })
+           }
+            placeholder="Enter panchayat name"
+             className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+              />
+          </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

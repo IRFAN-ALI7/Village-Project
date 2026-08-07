@@ -39,7 +39,7 @@ export default function ProfileContent() {
     district: 'Varanasi',
     state: 'Uttar Pradesh',
     pincode: '221001',
-    profilePhoto: '',
+    profileImage: '',
   });
 
   const [editData, setEditData] = useState(profileData);
@@ -76,23 +76,58 @@ export default function ProfileContent() {
     setEditData(profileData);
   };
 
-   const handleSave = async() => {
-     const token = localStorage.getItem("token");
-     const res = await fetch(`${API_URL}/user/` + profileData._id, {
-      method: "put",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(editData)
-     }
+const handleSave = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const data = new FormData();
+
+    data.append("name", editData.name || "");
+    data.append("mobile", editData.mobile || "");
+    data.append("email", editData.email || "");
+    data.append("address", editData.address || "");
+    data.append("panchayat", editData.panchayat || "");
+    data.append("village", editData.village || "");
+    data.append("wardNo", editData.wardNo || "");
+    data.append("postOffice", editData.postOffice || "");
+    data.append("policeStation", editData.policeStation || "");
+    data.append("district", editData.district || "");
+    data.append("state", editData.state || "");
+    data.append("pincode", editData.pincode || "");
+
+    // New image file only
+    if (editData.profileFile) {
+      data.append("profileImage", editData.profileFile);
+    }
+
+    const res = await fetch(
+      `${API_URL}/user/${profileData._id}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      }
     );
 
-    const data = await res.json();
-    setProfileData(data);
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(result.message || "Profile update failed");
+      return;
+    }
+
+    setProfileData(result);
+    setEditData(result);
     setIsEditing(false);
-    alert('Profile updated successfully!');
-  };
+
+    alert("Profile updated successfully!");
+  } catch (error) {
+    console.error("Profile update error:", error);
+    alert("Server Error");
+  }
+};
 
    const handleCancel = () => {
     setEditData(profileData);
@@ -154,37 +189,50 @@ export default function ProfileContent() {
    
   };
 
-  const handleDeleteAccount = async() => {
+ const handleDeleteAccount = async () => {
+  try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API_URL}/user/${profileData._id}`,
-      {
-        method: "delete",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
 
-    const data = res.json();
+    const res = await fetch(`${API_URL}/user/${profileData._id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Failed to delete account");
+      return;
+    }
+
     localStorage.removeItem("token");
-   alert(data.message);
+
+    alert(data.message || "Account deleted successfully!");
+
     setShowDeleteModal(false);
-    window.location.href = '/';
-  };
+
+    window.location.href = "/";
+  } catch (error) {
+    console.error("Delete account error:", error);
+    alert("Server Error. Please try again.");
+  }
+};
 
   const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditData(prev => ({
-          ...prev,
-          profilePhoto: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  const previewUrl = URL.createObjectURL(file);
+
+  setEditData((prev) => ({
+    ...prev,
+    profileFile: file,
+    profilePreview: previewUrl,
+  }));
+};
 
   const getInitials = (name) => {
     const parts = name.split(' ');
@@ -220,8 +268,8 @@ export default function ProfileContent() {
             {/* Profile Photo and Name */}
             <div className="flex items-center space-x-6 mb-8 pb-6 border-b-2 border-gray-100">
               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl overflow-hidden">
-                {profileData.profilePhoto ? (
-                  <img src={profileData.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                {profileData.profileImage ? (
+                  <img src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   getInitials(profileData.name).toUpperCase()
                 )}
@@ -282,6 +330,14 @@ export default function ProfileContent() {
                     <p className="text-lg font-bold text-gray-800">{profileData.address}</p>
                   </div>
                 </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500 font-semibold mb-1">
+                   Panchayat
+                  </p>
+                  <p className="text-lg font-bold text-gray-800">
+                   {profileData.panchayat}
+                   </p>
+              </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-sm text-gray-500 font-semibold mb-1">Village</p>
@@ -369,11 +425,15 @@ export default function ProfileContent() {
             <div className="flex justify-center mb-8">
               <div className="relative">
                 <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold shadow-xl overflow-hidden">
-                  {editData.profilePhoto ? (
-                    <img src={editData.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    getInitials(editData.name).toUpperCase()
-                  )}
+                {editData.profilePreview || editData.profileImage ? (
+                   <img
+                src={editData.profilePreview || editData.profileImage}
+             alt="Profile"
+              className="w-full h-full object-cover"
+                 />
+            ) : (
+               getInitials(editData.name).toUpperCase()
+                 )}
                 </div>
                 <label className="absolute bottom-0 right-0 bg-blue-600 p-3 rounded-full cursor-pointer hover:bg-blue-700 transition-all shadow-lg">
                   <Camera className="h-5 w-5 text-white" />
@@ -444,6 +504,22 @@ export default function ProfileContent() {
                   />
                 </div>
               </div>
+
+              <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Panchayat *
+           </label>
+           <div className="relative">
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+               <input
+               type="text"
+               name="panchayat"
+               value={editData.panchayat}
+                onChange={handleInputChange}
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             />
+             </div>
+             </div>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Village *</label>

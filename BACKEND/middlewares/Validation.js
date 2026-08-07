@@ -5,6 +5,7 @@ const userSchema = Joi.object({
     mobile: Joi.string().pattern(/^[0-9]{10}$/).required(),
     email: Joi.string().email(),
     address: Joi.string().required(),
+    panchayat: Joi.string().required(),
     village: Joi.string().required(),
     wardNo: Joi.number().required(),
     postOffice: Joi.string().required(),
@@ -12,8 +13,10 @@ const userSchema = Joi.object({
     district: Joi.string().required(),
     state: Joi.string().required(),
     pincode: Joi.number().min(100000).max(999999).required(),
-    password:Joi.string().min(4).required(),
+    password: Joi.string().min(4).required(),
     status: Joi.string().valid("active", "inactive"),
+
+    profileImage: Joi.string().optional().allow(""),
 });
 
 const userValidate = (req,res,next)=> {
