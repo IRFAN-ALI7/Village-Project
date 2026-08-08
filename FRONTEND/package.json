@@ -20,6 +20,7 @@
     "@mui/material": "^7.3.9",
     "@tailwindcss/postcss": "^4.2.1",
     "axios": "^1.15.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -42,9 +42,19 @@ export default function NoticesManagement() {
     });
      const data = await res.json();
      if(res.ok){
-      toast.success(data.message);
-    setShowCreateModal(false);
-     }else{
+  toast.success(data.message);
+  setShowCreateModal(false);
+      setNewNotice({
+       title: '',
+        category: 'general',
+        date: null,
+        time: '',
+        location: '',
+        description: '',
+        fullDetails: '',
+        isPinned: false,
+           });
+       }else{
       toast.error(data.message);
      }
     }catch(err){
@@ -138,53 +148,60 @@ export default function NoticesManagement() {
     };
     return <span className={`px-3 py-1 rounded-full text-xs font-bold ${badges[category]}`}>{category?.toUpperCase()}</span>;
   };
-
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Notices Management</h2>
-          <button 
+      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg">
+
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex-1">Notices Management</h2>
+          <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-semibold flex items-center space-x-2"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl hover:shadow-lg transition-all font-semibold text-sm w-full sm:w-auto"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
             <span>Create New Notice</span>
           </button>
         </div>
 
+        {/* ── Notice Cards ── */}
         <div className="space-y-4">
           {notices.map((notice) => (
-            <div key={notice.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-6 hover:shadow-lg transition-all">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <Megaphone className="h-6 w-6 text-orange-600" />
-                    <h3 className="font-bold text-lg text-gray-800">{notice.title}</h3>
-                    {notice.isPinned && <Pin className="h-5 w-5 text-red-600 fill-red-600" />}
+            <div key={notice.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4 md:p-6 hover:shadow-lg transition-all">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <Megaphone className="h-5 w-5 text-orange-600 shrink-0" />
+                    <h3 className="font-bold text-base md:text-lg text-gray-800 leading-tight">{notice.title}</h3>
+                    {notice.isPinned && <Pin className="h-4 w-4 text-red-600 fill-red-600 shrink-0" />}
                   </div>
-                  <div className="flex items-center space-x-4 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     {getTypeBadge(notice.category)}
-                    {notice.date && (
-                      <span className="text-sm text-gray-600">
-                        Posted: {new Date(notice.date).toLocaleDateString('en-IN')}
-                        </span>
-                    )}
+                    <span className="text-xs text-gray-500">Posted: {new Date(notice.date).toLocaleDateString('en-IN')}</span>
                   </div>
                   <p className="text-gray-700 text-sm">{notice.description}</p>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => handleEditClick(notice)}
-                    className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+
+                {/* Action buttons — row on mobile, column on sm */}
+                <div className="flex sm:flex-col gap-2 shrink-0">
+                  <button
+                    onClick={() => { setSelectedNotice(notice); setShowEditModal(true); }}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium"
                   >
-                    <Edit className="h-5 w-5" />
+                    <Edit className="h-4 w-4" />
+                    <span className="sm:hidden">Edit</span>
                   </button>
-                  <button 
-                    onClick={() => handleDeleteClick(notice._id)}
-                    className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                  <button
+                   onClick={() => { 
+                    setDeleteNoticeId(notice._id); 
+                    setShowDeleteModal(true); 
+                     }}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm font-medium"
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sm:hidden">Delete</span>
                   </button>
                 </div>
               </div>
@@ -193,62 +210,38 @@ export default function NoticesManagement() {
         </div>
       </div>
 
-      {/* Create Notice Modal */}
+      {/* ── Create Modal ── */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-2xl sticky top-0">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Create New Notice</h2>
-                <button onClick={() => setShowCreateModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-5 py-4 rounded-t-2xl sticky top-0 flex items-center justify-between">
+              <h2 className="text-lg md:text-2xl font-bold">Create New Notice</h2>
+              <button onClick={() => setShowCreateModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-
-            <div className="p-6 space-y-4">
+            <div className="p-4 md:p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Notice Title <span className="text-red-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newNotice.title}
-                  onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })}
-                  placeholder="Enter notice title"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Title <span className="text-red-600">*</span></label>
+                <input type="text" value={newNotice.title} onChange={(e) => setNewNotice({ ...newNotice, title: e.target.value })} placeholder="Enter notice title" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Type <span className="text-red-600">*</span></label>
+                  <select value={newNotice.category} onChange={(e) => setNewNotice({ ...newNotice, category: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500">
+                    <option value="general">General</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="scheme">Scheme</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Date <span className="text-red-600">*</span></label>
+                  <input type="date" value={newNotice.date} onChange={(e) => setNewNotice({ ...newNotice, date: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500" />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Notice Type <span className="text-red-600">*</span>
-                </label>
-                <select
-                  value={newNotice.category}
-                  onChange={(e) => setNewNotice({ ...newNotice, category: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="general">General</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="scheme">Scheme</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Notice Date <span className="text-red-600">(optional)</span>
-                </label>
-                <input
-                  type="date"
-                  value={newNotice.date}
-                  onChange={(e) => setNewNotice({ ...newNotice, date: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-
-              <div>
+               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Notice Time <span className="text-red-600">(optional)</span>
                 </label>
@@ -261,7 +254,7 @@ export default function NoticesManagement() {
                 />
               </div>
 
-                <div>
+                 <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Notice Location <span className="text-red-600">(optional)</span>
                 </label>
@@ -275,105 +268,57 @@ export default function NoticesManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Short Description <span className="text-red-600">*</span>
-                </label>
-                <textarea
-                  value={newNotice.description}
-                  onChange={(e) => setNewNotice({ ...newNotice, description: e.target.value })}
-                  placeholder="Enter short description"
-                  rows={2}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Short Description <span className="text-red-600">*</span></label>
+                <textarea value={newNotice.description} onChange={(e) => setNewNotice({ ...newNotice, description: e.target.value })} placeholder="Enter short description" rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500" />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Details  <span className="text-red-600">*</span>
-                </label>
-                <textarea
-                  value={newNotice.fullDetails}
-                  onChange={(e) => setNewNotice({ ...newNotice, fullDetails: e.target.value })}
-                  placeholder="Enter full notice details"
-                  rows={4}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Details</label>
+                <textarea value={newNotice.fullDetails} onChange={(e) => setNewNotice({ ...newNotice, fullDetails: e.target.value })} placeholder="Enter full notice details" rows={3} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500" />
               </div>
-
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="pinNotice"
-                  checked={newNotice.isPinned}
-                  onChange={(e) => setNewNotice({ ...newNotice, isPinned: e.target.checked })}
-                  className="h-4 w-4 text-green-600 rounded"
-                />
-                <label htmlFor="pinNotice" className="text-sm font-semibold text-gray-700">
-                  Pin this notice (show at top)
-                </label>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button onClick={handleCreateNotice} className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg hover:shadow-lg font-semibold">
-                  Create Notice
-                </button>
-                <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-semibold">
-                  Cancel
-                </button>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={newNotice.isPinned} onChange={(e) => setNewNotice({ ...newNotice, isPinned: e.target.checked })} className="h-4 w-4 text-green-600 rounded" />
+                <span className="text-sm font-semibold text-gray-700">Pin this notice (show at top)</span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleCreateNotice} className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl hover:shadow-lg font-semibold text-sm">Create Notice</button>
+                <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 font-semibold text-sm">Cancel</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Notice Modal */}
+      {/* ── Edit Modal ── */}
       {showEditModal && selectedNotice && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl sticky top-0">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Edit Notice</h2>
-                <button onClick={() => setShowEditModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-4 rounded-t-2xl sticky top-0 flex items-center justify-between">
+              <h2 className="text-lg md:text-2xl font-bold">Edit Notice</h2>
+              <button onClick={() => setShowEditModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-
-            <div className="p-6 space-y-4">
+            <div className="p-4 md:p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Notice Title</label>
-                <input
-                  type="text"
-                  value={selectedNotice.title}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, title: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Title</label>
+                <input type="text" value={selectedNotice.title} onChange={(e) => setSelectedNotice({ ...selectedNotice, title: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Notice Type</label>
-                <select
-                  value={selectedNotice.category}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, category: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="general">General</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="scheme">Scheme</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Type</label>
+                  <select value={selectedNotice.category} onChange={(e) => setSelectedNotice({ ...selectedNotice, category: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="general">General</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="scheme">Scheme</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Notice Date</label>
+                  <input type="date" value={selectedNotice.date} onChange={(e) => setSelectedNotice({ ...selectedNotice, date: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Notice Date</label>
-                <input
-                  type="date"
-                  value={selectedNotice.date}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, date: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
+              
                <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Notice Time</label>
                 <input
@@ -393,81 +338,45 @@ export default function NoticesManagement() {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Short Description</label>
-                <textarea
-                  value={selectedNotice.description}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, description: e.target.value })}
-                  rows={2}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Short Description</label>
+                <textarea value={selectedNotice.description} onChange={(e) => setSelectedNotice({ ...selectedNotice, description: e.target.value })} rows={2} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Details</label>
-                <textarea
-                  value={selectedNotice.fullDetails}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, fullDetails: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Details</label>
+                <textarea value={selectedNotice.fullDetails} onChange={(e) => setSelectedNotice({ ...selectedNotice, fullDetails: e.target.value })} rows={3} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
-
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="editPinNotice"
-                  checked={selectedNotice.isPinned}
-                  onChange={(e) => setSelectedNotice({ ...selectedNotice, isPinned: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 rounded"
-                />
-                <label htmlFor="editPinNotice" className="text-sm font-semibold text-gray-700">
-                  Pin this notice
-                </label>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button onClick={handleUpdateNotice} className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                  Update Notice
-                </button>
-                <button onClick={() => setShowEditModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-semibold">
-                  Cancel
-                </button>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={selectedNotice.isPinned} onChange={(e) => setSelectedNotice({ ...selectedNotice, isPinned: e.target.checked })} className="h-4 w-4 text-blue-600 rounded" />
+                <span className="text-sm font-semibold text-gray-700">Pin this notice</span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleUpdateNotice} className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 font-semibold text-sm">Update Notice</button>
+                <button onClick={() => setShowEditModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 font-semibold text-sm">Cancel</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Modal */}
+      {/* ── Delete Modal ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Confirm Delete</h2>
-                <button onClick={() => setShowDeleteModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-5 py-4 rounded-t-2xl flex items-center justify-between">
+              <h2 className="text-lg md:text-2xl font-bold">Confirm Delete</h2>
+              <button onClick={() => setShowDeleteModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-
-            <div className="p-6">
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
-                <div className="flex items-start space-x-3">
-                  <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0" />
-                  <p className="text-red-800 font-semibold">Are you sure you want to delete this notice?</p>
-                </div>
+            <div className="p-4 md:p-6">
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-5 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                <p className="text-red-800 font-semibold text-sm">Are you sure you want to delete this notice? This action cannot be undone.</p>
               </div>
-
-              <div className="flex space-x-3">
-                <button onClick={handleDeleteConfirm} className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-semibold">
-                  Yes, Delete
-                </button>
-                <button onClick={() => setShowDeleteModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-semibold">
-                  Cancel
-                </button>
+              <div className="flex gap-3">
+                <button onClick={handleDeleteConfirm} className="flex-1 bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 font-semibold text-sm">Yes, Delete</button>
+                <button onClick={() => setShowDeleteModal(false)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 font-semibold text-sm">Cancel</button>
               </div>
             </div>
           </div>

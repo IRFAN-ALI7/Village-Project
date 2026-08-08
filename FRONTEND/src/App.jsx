@@ -7,6 +7,7 @@ import MyComplaintsPage from "./pages/MyComplaintsPage";
 import UserNotificationPage from "./pages/UserNotificationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute.";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AuthRoute from "./components/AuthRoute";
 import NoticePage from "./pages/NoticePage";
 import HomePage from "./pages/HomePage";
@@ -106,7 +107,9 @@ function App() {
           <Route
            path="/schemes"
              element = {
-          <SchemesPage/>
+              <ProtectedRoute>
+            <SchemesPage/>
+          </ProtectedRoute>
       }
       />
         <Route
@@ -130,13 +133,19 @@ function App() {
        <Route
            path="/notices"
              element = {
-          <NoticePage/>
+          <ProtectedRoute>
+            <NoticePage/>
+          </ProtectedRoute>
       }
       />
 
       <Route path="/certificates"
-      element = {<CertificatesPage/>}
-      />
+      element = {
+        <ProtectedRoute>
+      <CertificatesPage/>
+      </ProtectedRoute>
+    }
+     />
 
       <Route path="/admin/register"
       element = {<AdminRegister/>}
@@ -147,36 +156,75 @@ function App() {
       />
 
        <Route path="/admin/dashboard"
-      element ={<AdminDashboard/>}
+           element ={
+            <AdminProtectedRoute>
+           <AdminDashboard/>
+            </AdminProtectedRoute>
+          }
+         />
+
+           <Route
+            path="/admin/complaints"
+           element={
+             <AdminProtectedRoute>
+              <AdminComplaintsPage />
+            </AdminProtectedRoute>
+         }
+         />
+
+           <Route
+            path="/admin/schemes"
+           element={
+            <AdminProtectedRoute>
+             <AdminSchemesPage />
+            </AdminProtectedRoute>
+          }
+         />
+
+           <Route
+          path="/admin/notices"
+           element={
+             <AdminProtectedRoute>
+            <AdminNoticesPage />
+             </AdminProtectedRoute>
+            }
+          />
+
+               <Route
+           path="/admin/users"
+            element={
+             <AdminProtectedRoute>
+             <AdminUsersPage />
+             </AdminProtectedRoute>
+            }
+        />
+
+          <Route
+            path="/admin/certificates"
+           element={
+            <AdminProtectedRoute>
+              <AdminCertificatesPage />
+            </AdminProtectedRoute>
+             }
+          />
+
+            <Route
+            path="/admin/notifications"
+           element={
+            <AdminProtectedRoute>
+             <AdminNotificationsPage />
+            </AdminProtectedRoute>
+       }
       />
 
-      <Route path="/admin/complaints"
-      element = {<AdminComplaintsPage/>}
-      />
-
-      <Route path="/admin/schemes"
-      element = {<AdminSchemesPage/>}
-      />
-
-      <Route path="/admin/notices"
-      element = {<AdminNoticesPage/>}
-      />
-
-      <Route path="/admin/users"
-      element = {<AdminUsersPage/>}
-      />
-
-      <Route path="/admin/certificates"
-      element = {<AdminCertificatesPage/>}
-      />
-
-      <Route path="/admin/notifications"
-      element = {<AdminNotificationsPage/>}
-      />
-
-      <Route path="/admin/settings" 
-      element = {<AdminSettingsPage/>}
-      />
+     <Route
+         path="/admin/settings"
+          element={
+         <AdminProtectedRoute>
+           <AdminSettingsPage />
+          </AdminProtectedRoute>
+         }
+       />
 
       </Routes>
     </BrowserRouter>

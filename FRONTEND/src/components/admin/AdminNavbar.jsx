@@ -76,46 +76,48 @@ useEffect(() => {
   
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 h-20 bg-gradient-to-r from-green-600 to-blue-600 shadow-lg z-50">
-        <div className="h-full px-4 md:px-8 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-gradient-to-r from-green-600 to-blue-600 shadow-lg z-50">
+        <div className="h-full px-3 md:px-8 flex items-center gap-2">
+
           {/* Left: Hamburger Menu */}
           <button
             onClick={onMenuClick}
-            className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
+            className="shrink-0 p-2 md:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
           >
-            <Menu className="h-6 w-6 text-white" />
+            <Menu className="h-5 w-5 md:h-6 md:w-6 text-white" />
           </button>
 
-          {/* Center: Page Title */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-white text-xl md:text-2xl font-bold whitespace-nowrap">
+          {/* Center: Page Title — flex-1 so it never overlaps right buttons */}
+          <div className="flex-1 min-w-0 flex justify-center">
+            <h1 className="text-white text-base md:text-2xl font-bold truncate max-w-full px-2 text-center">
               {pageTitle}
             </h1>
           </div>
 
           {/* Right: Notification + Profile */}
-          <div className="flex items-center space-x-4">
+          <div className="shrink-0 flex items-center gap-2 md:gap-4">
+
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm relative"
+                className="p-2 md:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm relative"
               >
-                <Bell className="h-6 w-6 text-white" />
+                <Bell className="h-5 w-5 md:h-6 md:w-6 text-white" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
+              {/* Notifications Dropdown — */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm md:w-80 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4">
                     <h3 className="font-bold text-lg">Notifications</h3>
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-72 md:max-h-96 overflow-y-auto">
                     {notifications.map((notif) => (
                       <div
                         key={notif._id}
@@ -126,15 +128,12 @@ useEffect(() => {
                         <p className={`text-sm ${!notif.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
                           {notif.title}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                           {notif.description}
-                            </p>
-                        <p className="text-xs text-gray-400 mt-1">{ new Date(notif.createdAt).toLocaleDateString() }</p>
+                        <p className="text-xs text-gray-400 mt-1">{notif.createdAt}</p>
                       </div>
                     ))}
                   </div>
                   <div className="p-3 text-center border-t">
-                    <button 
+                    <button
                       onClick={() => {
                         setShowNotifications(false);
                         navigate('/admin/notifications');
@@ -152,9 +151,9 @@ useEffect(() => {
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center space-x-3 p-2 pr-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
+                className="flex items-center gap-2 p-2 md:pr-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
               >
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold shadow-lg">
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg shrink-0">
                   {adminData.photo ? (
                     <img src={adminData.photo} alt="Admin" className="h-full w-full rounded-full object-cover" />
                   ) : (
@@ -162,12 +161,12 @@ useEffect(() => {
                   )}
                 </div>
                 <span className="text-white font-semibold hidden md:block">Admin</span>
-                <ChevronDown className="h-4 w-4 text-white" />
+                <ChevronDown className="h-4 w-4 text-white hidden md:block" />
               </button>
 
-              {/* Profile Dropdown */}
+              {/* Profile Dropdown — full width on mobile */}
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-xs md:w-72 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-6">
                     <div className="flex items-center space-x-4">
                       <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">

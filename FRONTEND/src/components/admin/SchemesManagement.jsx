@@ -257,17 +257,17 @@ export default function SchemesManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Schemes Management</h2>
+      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Schemes Management</h2>
             <p className="text-gray-600 text-sm mt-1">Manage government schemes and programs</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-semibold flex items-center space-x-2"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg hover:shadow-lg transition-all font-semibold text-sm w-full sm:w-auto shrink-0"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
             <span>Add New Scheme</span>
           </button>
         </div>
@@ -313,7 +313,7 @@ export default function SchemesManagement() {
 
         {/* Filters and Search */}
         <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-2">Category</label>
               <select
@@ -402,7 +402,7 @@ export default function SchemesManagement() {
                   </tr>
                 ) : (
                   currentSchemes.map((scheme) => (
-                    <tr key={scheme._id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={scheme.schemeId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 text-sm text-gray-800 font-medium">{scheme.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{scheme.category}</td>
                       <td className="px-6 py-4">{getStatusBadge(scheme.status)}</td>
@@ -435,7 +435,7 @@ export default function SchemesManagement() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteScheme(scheme._id)}
+                            onClick={() => handleDeleteScheme(scheme.schemeId)}
                             className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-xs font-semibold transition-colors"
                           >
                             Delete
@@ -463,10 +463,10 @@ export default function SchemesManagement() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className={'px-4 py-2 rounded-lg font-semibold transition-all flex items-center space-x-1 ' + (currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300')}
+                    className={'px-3 py-2 rounded-lg font-semibold transition-all flex items-center gap-1 ' + (currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300')}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    <span>Previous</span>
+                    <span className="hidden sm:inline">Previous</span>
                   </button>
 
                   <div className="flex items-center space-x-1">
@@ -485,9 +485,9 @@ export default function SchemesManagement() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className={'px-4 py-2 rounded-lg font-semibold transition-all flex items-center space-x-1 ' + (currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300')}
+                    className={'px-3 py-2 rounded-lg font-semibold transition-all flex items-center gap-1 ' + (currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300')}
                   >
-                    <span>Next</span>
+                    <span className="hidden sm:inline">Next</span>
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -499,19 +499,19 @@ export default function SchemesManagement() {
 
       {/* Add New Scheme Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-2xl sticky top-0">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-3xl w-full shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-5 py-4 rounded-t-2xl sticky top-0">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Add New Scheme</h2>
+                <h2 className="text-lg md:text-2xl font-bold">Add New Scheme</h2>
                 <button onClick={() => setShowAddModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 md:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Scheme Name <span className="text-red-600">*</span></label>
                   <input type="text" value={newScheme.name} onChange={(e) => setNewScheme({ ...newScheme, name: e.target.value })} placeholder="Enter scheme name" className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" />
@@ -531,7 +531,7 @@ export default function SchemesManagement() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Status <span className="text-red-600">*</span></label>
-                  <select value={newScheme.status} onChange={(e) => setNewScheme({ ...newScheme, status: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  <select value={newScheme.status} onChange={(e) => setNewScheme({ ...newScheme, status: e.target.value})} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
@@ -547,10 +547,14 @@ export default function SchemesManagement() {
                     accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      setNewScheme({
-                         ...newScheme, image: file 
-                        });
-                      }}
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setNewScheme({ ...newScheme, image: reader.result});
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   />
                   {newScheme.image && (
@@ -591,18 +595,18 @@ export default function SchemesManagement() {
 
       {/* Edit Scheme Modal */}
       {showEditModal && selectedScheme && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-3xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-2xl sticky top-0">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-3xl w-full shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-4 rounded-t-2xl sticky top-0">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Edit Scheme</h2>
+                <h2 className="text-lg md:text-2xl font-bold">Edit Scheme</h2>
                 <button onClick={() => setShowEditModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 md:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Scheme Name <span className="text-red-600">*</span></label>
                   <input type="text" value={selectedScheme.name} onChange={(e) => setSelectedScheme({ ...selectedScheme, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" />
@@ -640,7 +644,7 @@ export default function SchemesManagement() {
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          setSelectedScheme({ ...selectedScheme, image: reader.result });
+                          setSelectedScheme({ ...selectedScheme, image: reader.result});
                         };
                         reader.readAsDataURL(file);
                       }
@@ -685,25 +689,23 @@ export default function SchemesManagement() {
 
       {/* View Scheme Modal */}
       {showViewModal && selectedScheme && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-2xl sticky top-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Gift className="h-8 w-8" />
-                  <div>
-                    <h2 className="text-2xl font-bold">{selectedScheme.name}</h2>
-                  </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-4xl w-full shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-5 py-4 rounded-t-2xl sticky top-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Gift className="h-6 w-6 shrink-0" />
+                  <h2 className="text-base md:text-2xl font-bold truncate">{selectedScheme.name}</h2>
                 </div>
-                <button onClick={() => setShowViewModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all">
+                <button onClick={() => setShowViewModal(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all shrink-0">
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
-            <div className="p-6 space-y-6">
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Basic Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 md:p-6 border border-green-200">
+                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600 font-semibold mb-1">Category</p>
                     <p className="text-gray-800 font-bold">{selectedScheme.category}</p>

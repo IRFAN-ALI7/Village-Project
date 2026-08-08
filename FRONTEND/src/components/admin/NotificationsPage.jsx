@@ -1,5 +1,6 @@
 import { Bell, Check, Trash2, CheckCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import axios from "axios";
 import API_URL from '../../config/api';
 
@@ -59,7 +60,7 @@ const deleteNotification = async (id) => {
         },
       }
     );
-
+    toast.success("Notification deleted successfully!");
     fetchNotifications();
   } catch (err) {
     console.error(err);
@@ -101,78 +102,87 @@ useEffect(() => {
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
-
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">All Notifications</h2>
+      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg">
+
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-6">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">All Notifications</h2>
             <p className="text-gray-600 text-sm mt-1">
               You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
             </p>
           </div>
           {unreadCount > 0 && (
-            <button 
+            <button
               onClick={markAllAsRead}
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transition-all font-semibold flex items-center space-x-2"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2.5 rounded-lg hover:shadow-lg transition-all font-semibold text-sm w-full sm:w-auto shrink-0"
             >
-              <CheckCheck className="h-5 w-5" />
+              <CheckCheck className="h-4 w-4 shrink-0" />
               <span>Mark All as Read</span>
             </button>
           )}
         </div>
 
+        {/* ── Notification Cards ── */}
         <div className="space-y-3">
           {notifications.map((notif) => (
             <div
               key={notif._id}
-              className={`rounded-xl p-5 border-2 transition-all ${
-                !notif.isRead
-                  ? 'bg-blue-50 border-blue-200 hover:shadow-md' 
-                  : 'bg-white border-gray-200 hover:shadow-md'
-              }`}
+              className={`rounded-xl p-4 border-2 transition-all ${!notif.isRead ? 'bg-blue-50 border-blue-200 hover:shadow-md' : 'bg-white border-gray-200 hover:shadow-md'}`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className={`p-3 rounded-xl ${!notif.isRead ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                    <Bell className={`h-6 w-6 ${!notif.isRead ? 'text-blue-600' : 'text-gray-600'}`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className={`font-bold text-lg ${!notif.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
-                        {notif.title}
-                      </h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getTypeColor(notif.type)}`}>
-                        {notif.type.toUpperCase()}
-                      </span>
-                      {!notif.isRead && (
-                        <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                          NEW
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-sm mb-2">{notif.description}</p>
-                    <p className="text-xs text-gray-500">{new Date(notif.createdAt).toLocaleDateString()}</p>
-                  </div>
+              <div className="flex items-start gap-3">
+
+                {/* Bell icon */}
+                <div className={`p-2.5 rounded-xl shrink-0 ${!notif.isRead ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <Bell className={`h-5 w-5 ${!notif.isRead ? 'text-blue-600' : 'text-gray-600'}`} />
                 </div>
-                <div className="flex space-x-2 ml-4">
-                  {!notif.isRead && (
-                    <button
-                      onClick={() => markAsRead(notif._id)}
-                      className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
-                      title="Mark as read"
-                    >
-                      <Check className="h-5 w-5" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteNotification(notif._id)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+
+                {/* Content + badges + detail */}
+                <div className="flex-1 min-w-0">
+
+                  {/* Title row with action buttons on right */}
+                  <div className="flex items-start gap-2">
+                    <h3 className={`font-bold text-sm md:text-base flex-1 min-w-0 leading-snug ${!notif.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {notif.title}
+                    </h3>
+                    {/* Action buttons — always top-right */}
+                    <div className="flex gap-1.5 shrink-0">
+                      { !notif.isRead && (
+                        <button
+                          onClick={() => markAsRead(notif._id)}
+                          className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
+                          title="Mark as read"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteNotification(notif._id)}
+                        className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Badges row — wraps naturally */}
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getTypeColor(notif.type)}`}>
+                      {notif.type.toUpperCase()}
+                    </span>
+                    {!notif.isRead && (
+                      <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        NEW
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Details */}
+                  <p className="text-gray-600 text-xs md:text-sm mt-1.5 leading-relaxed">{notif.description}</p>
+                  <p className="text-xs text-gray-500">{new Date(notif.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
