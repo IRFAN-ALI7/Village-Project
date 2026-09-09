@@ -1,33 +1,24 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-
-  tls: {
-    rejectUnauthorized: false,
-  },
-
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"Digital Village Project, Jharkhand" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: `"Digital Village Project, Jharkhand" <onboarding@resend.dev>`,
       to,
       subject,
       html,
     });
 
-    console.log("Email sent:", info.messageId);
+    if (error) {
+      console.error("Email sending failed:", error);
+      throw error;
+    }
 
-    return info;
+    console.log("Email sent:", data.id);
+
+    return data;
   } catch (error) {
     console.error("Email sending failed:", error);
     throw error;
