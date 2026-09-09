@@ -8,7 +8,7 @@ const {
   forgotPassword,
   verifyForgotPasswordOtp,
   resetPassword,
-} = require("../../controllers/superadmin/authController");
+} = require("../../controllers/superAdmin/authController");
 
 // SUPER ADMIN LOGIN
 
