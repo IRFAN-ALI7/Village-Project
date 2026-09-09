@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { UserPlus, Mail, Phone, Lock, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react';
 import API_URL from '../../config/api';
+import toast from 'react-hot-toast';
 
 export default function AdminRegister() {
   const navigate = useNavigate();
@@ -66,10 +67,10 @@ export default function AdminRegister() {
     const data = await res.json();
     if(res.ok){
       localStorage.setItem("token", data.token);
-      alert(data.message);
+      toast.success(data.message);
       navigate('/admin/login');
     }else{
-      alert(data.message);
+      toast.error(data.message);
     }
   }catch(err){
     console.log(err);

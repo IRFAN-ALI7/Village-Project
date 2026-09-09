@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, MapPin, Upload, AlertCircle, X } from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
+import toast from "react-hot-toast";
 import API_URL from '../../config/api';
 
 export default function ComplaintForm() {
@@ -61,7 +62,7 @@ export default function ComplaintForm() {
     
     // Check max 5 images
     if (files.length + selectedFiles.length > 5) {
-      alert('Maximum 5 images allowed!');
+      toast.error('Maximum 5 images allowed!');
       return;
     }
 
@@ -70,7 +71,7 @@ export default function ComplaintForm() {
     const invalidFiles = files.filter(file => file.size > maxSize);
     
     if (invalidFiles.length > 0) {
-      alert(`Some files exceed 2MB limit:\n${invalidFiles.map(f => f.name).join('\n')}`);
+      toast.error(`Some files exceed 2MB limit:\n${invalidFiles.map(f => f.name).join('\n')}`);
       return;
     }
 
@@ -114,7 +115,7 @@ export default function ComplaintForm() {
     });
     try{
           const token = localStorage.getItem("token");
-     const res = await fetch(`${API_URL}/complaints`, {
+     const res = await fetch(`${API_URL}/user/complaints`, {
       method: "post",
       headers: {
         Authorization: `Bearer ${token}`
@@ -124,8 +125,7 @@ export default function ComplaintForm() {
      const data = await res.json();
 
      if(res.ok){
-         console.log(data);
-    alert(`Complaint submitted successfully! ID: ${data.complaintId}`);
+    toast.success(`Complaint submitted successfully! ID: ${data.complaintId}`);
     navigate("/dashboard");
     // Reset form
     setFormData({
@@ -139,11 +139,11 @@ export default function ComplaintForm() {
     setSelectedFiles([]);
     setPreviewUrls([]);
      }else{
-      alert(data.message);
+      toast.error(data.message);
      }
     } catch(error){
       console.log(error);
-      alert("Error submitting complaint");
+      toast.error("Error submitting complaint");
     }
   };
 

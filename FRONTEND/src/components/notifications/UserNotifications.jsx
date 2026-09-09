@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bell, Check, Trash2, CheckCheck, ChevronRight, UserPlus, MessageSquareWarning, CheckCircle2, XCircle, Landmark, Megaphone, FileText, Info } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import axios from "axios";
+import toast from "react-hot-toast";
 import API_URL from "../../config/api";
 
 const typeConfig = {
@@ -45,7 +46,7 @@ export default function UserNotifications() {
     fetchNotifications();
 
   } catch (error) {
-    alert(error.response?.data?.message || error.message);
+    toast.error(error.response?.data?.message || error.message);
   }
 };
 
@@ -66,7 +67,7 @@ export default function UserNotifications() {
     fetchNotifications();
 
   } catch (error) {
-    alert(error.response?.data?.message || error.message);
+    toast.error(error.response?.data?.message || error.message);
   }
 };
 
@@ -83,7 +84,7 @@ export default function UserNotifications() {
     fetchNotifications();
 
   } catch (error) {
-    alert(error.response?.data?.message || error.message);
+    toast.error(error.response?.data?.message || error.message);
   }
 };
 const deleteAll = async () => {
@@ -99,7 +100,7 @@ const deleteAll = async () => {
     fetchNotifications();
 
   } catch (error) {
-    alert(error.response?.data?.message || error.message);
+    toast.error(error.response?.data?.message || error.message);
   }
 };
 
@@ -116,7 +117,7 @@ const deleteAll = async () => {
     setItems(res.data.activities);
 
   } catch (error) {
-    alert(error.response?.data?.message || error.message);
+    toast.error(error.response?.data?.message || error.message);
   }
 };
 

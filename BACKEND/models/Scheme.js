@@ -1,49 +1,112 @@
-const express = require('express');
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const schemeSchema = new mongoose.Schema({
+const schemeSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,   
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
+
     category: {
-        type: String,
-        required: true,
-        enum: ['Housing', 'Agriculture', 'Health','Education', 'Social Welfare', 'Employment', 'Women Empowerment', 'Environment']
+      type: String,
+      enum: [
+        "Housing",
+        "Agriculture",
+        "Health",
+        "Education",
+        "Social Welfare",
+        "Employment",
+        "Women Empowerment",
+        "Environment",
+      ],
+      required: true,
     },
+
     status: {
-        type: String,
-        required: true,
-        enum: ['active', 'inactive'],
-        default: 'active'
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
     },
+
     officialLink: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
     },
+
     image: {
-        type: String,
+      type: String,
+      default: "",
     },
+
+    imagePublicId: {
+  type: String,
+  default: "",
+},
+
     startDate: {
-        type: Date,
+      type: String,
+      default: "",
     },
+
     endDate: {
-        type: Date, 
+      type: String,
+      default: "",
     },
+
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
     },
+
     eligibility: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
     },
+
     documents: {
-        type: String,
+      type: String,
+      default: "",
     },
-}, { timestamps: true });
 
-const Scheme = mongoose.model('Scheme', schemeSchema);
+    // SCHEME OWNE
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+    },
 
-module.exports = Scheme;
+    // PANCHAYAT SCOP
+    panchayat: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    panchayatCode: {
+      type: Number,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+
+// PANCHAYAT-WISE QUERY INDEX
+schemeSchema.index({
+  panchayatCode: 1,
+  createdAt: -1,
+});
+
+schemeSchema.index({
+  panchayat: 1,
+  createdAt: -1,
+});
+
+
+module.exports = mongoose.model("Scheme", schemeSchema);

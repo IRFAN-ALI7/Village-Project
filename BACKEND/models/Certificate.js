@@ -1,34 +1,39 @@
-const { number } = require("joi");
 const mongoose = require("mongoose");
 
-const certificateSchema = new mongoose.Schema({
+const certificateSchema = new mongoose.Schema(
+  {
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
+
     certificateId: {
-        type: String,
-        required: true,
-        unique: true
+      type: String,
+      required: true,
+      unique: true,
     },
+
     type: String,
 
     applicantName: String,
+
     appliedDate: {
-        type: Date,
-        default: Date.now
+      type: Date,
+      default: Date.now,
     },
 
     status: {
-        type: String,
-        enum:["pending", "approved", "rejected"],
-        default: "pending",
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
+
     issueDate: {
-        type: Date,
-        default: Date.now()
+      type: Date,
+      default: null,
     },
+
     fatherName: String,
     dateOfBirth: String,
     gender: String,
@@ -53,8 +58,11 @@ const certificateSchema = new mongoose.Schema({
 
     purpose: String,
     rejectionReason: String,
-
-}, {timestamps: true});
+  },
+  {
+    timestamps: true,
+  }
+);
 
 const Certificate = mongoose.model("Certificate", certificateSchema);
 

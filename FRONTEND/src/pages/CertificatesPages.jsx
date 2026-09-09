@@ -33,7 +33,7 @@ export default function CertificatesPage() {
   const fetchCertificate = async()=> {
     try{
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/certificates/my`, {
+      const res = await fetch(`${API_URL}/certificates/my-certificates`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`
@@ -169,7 +169,7 @@ export default function CertificatesPage() {
     };
 
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API_URL}/certificates`, {
+    const res = await fetch(`${API_URL}/certificates/create`, {
       method: "POST",
       headers:  {
         "Content-Type": "application/json",
@@ -246,7 +246,7 @@ export default function CertificatesPage() {
       return;
      
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API_URL}/certificates/${id}`, {
+    const res = await fetch(`${API_URL}/certificates/delete/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`

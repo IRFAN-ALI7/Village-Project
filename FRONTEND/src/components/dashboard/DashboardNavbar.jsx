@@ -1,124 +1,217 @@
-import { useState, useEffect, useRef } from 'react';
-import { Menu, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router';
-import  UserSidebar  from './UserSidebar';
+import { useState, useEffect, useRef } from "react";
+import {
+  Menu,
+  Home,
+  Bell,
+} from "lucide-react";
+import { useNavigate } from "react-router";
+import UserSidebar from "./UserSidebar";
 import axios from "axios";
 import API_URL from "../../config/api";
 
-
-export default function DashboardNavbar({ pageTitle = 'Smart Village Portal' }) {
+export default function DashboardNavbar({
+  pageTitle = "Smart Village Portal",
+}) {
   const navigate = useNavigate();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
   const notifRef = useRef(null);
 
- const [notifications, setNotifications] = useState([]);
- const [user, setUser] = useState(null);
- const unreadCount = notifications.filter(n => !n.isRead).length;
+  const [notifications, setNotifications] = useState([]);
 
- const fetchNotifications = async () => {
-  try {
-    const token = localStorage.getItem("token");
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
-    const res = await axios.get(`${API_URL}/activity/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    setNotifications(res.data.activities);
+  const unreadCount = notifications.filter(
+    (n) => !n.isRead
+  ).length;
 
-  } catch (error) {
-    console.log(error.response?.data?.message || error.message);
-  }
-};
-const fetchUser = async () => {
-  try {
-    const token = localStorage.getItem("token");
+  // ==========================================
+  // FETCH NOTIFICATIONS
+  // ==========================================
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await axios.get(`${API_URL}/user/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await axios.get(
+        `${API_URL}/activity/user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setUser(res.data);
-  } catch (error) {
-    console.log(error.response?.data?.message || error.message);
-  }
-};
+      setNotifications(res.data.activities);
+    } catch (error) {
+      console.log(
+        error.response?.data?.message || error.message
+      );
+    }
+  };
 
-const markNotificationAsRead = async (id) => {
-  try {
-    const token = localStorage.getItem("token");
+  // ==========================================
+  // FETCH USER PROFILE
+  // ==========================================
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    await axios.patch(
-      `${API_URL}/activity/read/${id}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      const res = await axios.get(
+        `${API_URL}/user/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item._id === id
-          ? { ...item, isRead: true }
-          : item
-      )
-    );
+      const userData = res.data.data;
 
-  } catch (error) {
-    console.log(error.response?.data?.message || error.message);
-  }
-};
+      setUser(userData);
 
+      localStorage.setItem(
+        "user",
+        JSON.stringify(userData)
+      );
+    } catch (error) {
+      console.log(
+        error.response?.data?.message || error.message
+      );
+    }
+  };
+
+  // ==========================================
+  // MARK NOTIFICATION AS READ
+  // ==========================================
+  const markNotificationAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_URL}/activity/read/${id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? { ...item, isRead: true }
+            : item
+        )
+      );
+    } catch (error) {
+      console.log(
+        error.response?.data?.message || error.message
+      );
+    }
+  };
+
+  // ==========================================
+  // CLOSE NOTIFICATIONS WHEN CLICKING OUTSIDE
+  // ==========================================
   useEffect(() => {
     const handler = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(e.target)
+      ) {
         setShowNotifications(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+
+    document.addEventListener("mousedown", handler);
+
+    return () =>
+      document.removeEventListener(
+        "mousedown",
+        handler
+      );
   }, []);
 
+  // ==========================================
+  // INITIAL DATA
+  // ==========================================
   useEffect(() => {
-  fetchNotifications();
-  fetchUser();
-}, []);
+    fetchNotifications();
+    fetchUser();
+  }, []);
 
   return (
     <>
+      {/* ==========================================
+          NAVBAR
+      ========================================== */}
       <nav className="fixed top-0 left-0 right-0 h-16 md:h-20 bg-gradient-to-r from-green-600 to-blue-600 shadow-lg z-50">
         <div className="h-full px-3 md:px-8 flex items-center justify-between gap-2">
 
-          {/* Left: Hamburger */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 md:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm shrink-0"
-          >
-            <Menu className="h-5 md:h-6 w-5 md:w-6 text-white" />
-          </button>
+          {/* ==========================================
+              LEFT SIDE
+          ========================================== */}
+          <div className="flex items-center gap-2 shrink-0">
 
-          {/* Center: Title  */}
+            {/* Hamburger */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 md:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm shrink-0"
+            >
+              <Menu className="h-5 md:h-6 w-5 md:w-6 text-white" />
+            </button>
+
+            {/* Home */}
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 px-2.5 py-2 md:px-4 md:py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm text-white shrink-0"
+            >
+              <Home className="h-5 w-5" />
+
+              <span className="hidden sm:block font-semibold">
+                Home
+              </span>
+            </button>
+
+          </div>
+
+          {/* ==========================================
+              CENTER: TITLE
+          ========================================== */}
           <div className="flex-1 min-w-0 flex justify-center">
             <h1 className="text-white text-sm md:text-2xl font-bold truncate max-w-full px-1 text-center">
               {pageTitle}
             </h1>
           </div>
 
-          {/* Right: Bell + Avatar */}
+          {/* ==========================================
+              RIGHT: BELL + AVATAR
+          ========================================== */}
           <div className="flex items-center gap-2 shrink-0">
 
-            {/* Bell */}
-            <div className="relative" ref={notifRef}>
+            {/* ==========================================
+                BELL
+            ========================================== */}
+            <div
+              className="relative"
+              ref={notifRef}
+            >
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() =>
+                  setShowNotifications(
+                    !showNotifications
+                  )
+                }
                 className="p-2 md:p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm relative"
               >
                 <Bell className="h-5 md:h-6 w-5 md:w-6 text-white" />
+
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 md:h-5 w-4 md:w-5 flex items-center justify-center">
                     {unreadCount}
@@ -126,67 +219,119 @@ const markNotificationAsRead = async (id) => {
                 )}
               </button>
 
+              {/* ==========================================
+                  NOTIFICATION DROPDOWN
+              ========================================== */}
               {showNotifications && (
                 <div className="fixed md:absolute top-16 md:top-auto md:mt-2 right-3 md:right-0 w-[calc(100vw-1.5rem)] max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+
                   <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4">
-                    <h3 className="font-bold text-lg">Notifications</h3>
+                    <h3 className="font-bold text-lg">
+                      Notifications
+                    </h3>
                   </div>
+
                   <div className="max-h-72 overflow-y-auto">
-                    {notifications.map(n => (
+
+                    {notifications.map((n) => (
                       <div
                         key={n._id}
-                         onClick={async () => {
-                      await markNotificationAsRead(n._id);
-                      setShowNotifications(false);
-                       navigate(n.route);
-                       }}
-                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${!n.isRead ? 'bg-blue-50' : ''}`}
+                        onClick={async () => {
+                          await markNotificationAsRead(
+                            n._id
+                          );
+
+                          setShowNotifications(false);
+
+                          navigate(n.route);
+                        }}
+                        className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                          !n.isRead
+                            ? "bg-blue-50"
+                            : ""
+                        }`}
                       >
-                        <p className={`text-sm ${!n.isRead ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>{n.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{n.description}</p>
-                        <p className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                        <p
+                          className={`text-sm ${
+                            !n.isRead
+                              ? "font-semibold text-gray-800"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {n.title}
+                        </p>
+
+                        <p className="text-xs text-gray-500 mt-1">
+                          {n.description}
+                        </p>
+
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(
+                            n.createdAt
+                          ).toLocaleString()}
+                        </p>
                       </div>
                     ))}
+
                   </div>
+
                   <div className="p-3 text-center border-t">
+
                     <button
-                         onClick={() => {
-                               setShowNotifications(false);
-                              navigate("/notifications");
-                                     }}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        navigate(
+                          "/notifications"
+                        );
+                      }}
                       className="text-blue-600 text-sm font-semibold hover:text-blue-700 transition-colors"
                     >
                       View All Notifications
                     </button>
+
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Avatar */}
+            {/* ==========================================
+                AVATAR
+            ========================================== */}
             <div className="h-10 w-10 rounded-full overflow-hidden shadow-lg bg-gray-200">
-             {user?.profileImage ? (
-             <img
-             src={user.profileImage}
-            alt={user.name || "User"}
-            className="h-full w-full object-cover"
-          />
-         ) : (
-             <div className="h-full w-full flex items-center justify-center text-gray-600 font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+
+              {user?.profileImage ? (
+                <img
+                  src={user.profileImage}
+                  alt={user.name || "User"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-gray-600 font-bold">
+                  {user?.name
+                    ?.charAt(0)
+                    ?.toUpperCase() || "U"}
+                </div>
+              )}
+
             </div>
-            )}
-       </div>
 
           </div>
         </div>
       </nav>
 
-      {/* Spacer — matches navbar height at each breakpoint */}
+      {/* ==========================================
+          SPACER — MATCHES NAVBAR HEIGHT
+      ========================================== */}
       <div className="h-16 md:h-20" />
 
-      {/* Sidebar — available on every page */}
-      <UserSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* ==========================================
+          USER SIDEBAR
+      ========================================== */}
+      <UserSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        user={user}
+      />
     </>
   );
 }

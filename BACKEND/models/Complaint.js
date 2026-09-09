@@ -35,6 +35,13 @@ const complaintSchema = new mongoose.Schema({
             type: String,
         }
     ],
+
+    photoPublicIds: [
+    {
+        type: String,
+    }
+],
+
     status: {
         type:String,
         enum:["pending", "in-progress", "resolved", "rejected"],

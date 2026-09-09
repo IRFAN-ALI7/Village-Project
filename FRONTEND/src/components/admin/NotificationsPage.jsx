@@ -182,7 +182,16 @@ useEffect(() => {
 
                   {/* Details */}
                   <p className="text-gray-600 text-xs md:text-sm mt-1.5 leading-relaxed">{notif.description}</p>
-                  <p className="text-xs text-gray-500">{new Date(notif.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500">
+                 {new Date(notif.createdAt).toLocaleString("en-IN", {
+                      day: "2-digit",
+                        month: "2-digit",
+                     year: "numeric",
+                   hour: "2-digit",
+                      minute: "2-digit",
+                        hour12: true,
+                           })}
+                    </p>
                 </div>
               </div>
             </div>

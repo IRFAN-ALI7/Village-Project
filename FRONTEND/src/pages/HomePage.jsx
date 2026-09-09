@@ -1,521 +1,1091 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { 
-  Home, 
-  FileText, 
-  Gift, 
-  Megaphone, 
+import { jwtDecode } from 'jwt-decode';
+import {
+  Home,
+  FileText,
+  Gift,
+  Megaphone,
   Award,
-  Users,
   Shield,
   Clock,
   CheckCircle,
   ArrowRight,
   Menu,
   X,
+  Send,
+  Bot,
+  User,
   Phone,
   Mail,
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
   ChevronRight,
-  Smartphone,
-  Globe,
-  TrendingUp
+  Sparkles,
+  Layers,
+  HeadphonesIcon,
+  LayoutDashboard,
 } from 'lucide-react';
-import villageImg from "../assets/villageImg.png";
+
+import homePageImg from "../assets/homePageImg.jpeg";
+
+/* ── AI Chat ── */
+
+const BOT_REPLIES = [
+  {
+    keywords: ['complaint', 'shikayat', 'problem', 'issue', 'report'],
+    reply:
+      'To file a complaint, register or login and go to "Online Complaint". You can track status from "My Complaints".',
+  },
+  {
+    keywords: ['scheme', 'yojana', 'benefit', 'pension', 'subsidy'],
+    reply:
+      'All government schemes are under "Government Schemes". Filter by category and apply directly online after logging in.',
+  },
+  {
+    keywords: ['certificate', 'birth', 'death', 'income', 'caste'],
+    reply:
+      'Apply for certificates (Birth, Death, Income, Caste) from the "Certificates" section. Upload documents and track your application.',
+  },
+  {
+    keywords: ['notice', 'announcement', 'news', 'update'],
+    reply:
+      'All village announcements and official notices are on the "Notice Board". No login required to view them.',
+  },
+  {
+    keywords: ['register', 'signup', 'account', 'new user'],
+    reply:
+      'Click "Register" in the navbar. Fill your name, Aadhaar, mobile, and panchayat details. Verification is instant.',
+  },
+  {
+    keywords: ['login', 'password', 'forgot', 'sign in'],
+    reply:
+      'Click "Login" in the menu. Use your registered mobile and password. Use the reset link if you forgot your password.',
+  },
+  {
+    keywords: ['admin', 'officer', 'panchayat'],
+    reply:
+      'For admin access, click "Admin" in the navbar. Credentials are provided by the Super Administrator.',
+  },
+  {
+    keywords: ['jharkhand', 'district', 'block', 'gram'],
+    reply:
+      'This portal serves all Gram Panchayats of Jharkhand. Select your district and panchayat during registration.',
+  },
+];
+
+function getBotReply(msg) {
+  const l = msg.toLowerCase();
+
+  for (const { keywords, reply } of BOT_REPLIES) {
+    if (keywords.some((k) => l.includes(k))) {
+      return reply;
+    }
+  }
+
+  return "I'm here to help! Ask me about complaints, certificates, schemes, notices, registration, or login.";
+}
+
+function HelpChat({ onClose }) {
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState('');
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
+  }, [msgs]);
+
+  const send = () => {
+    const text = input.trim();
+
+    if (!text) return;
+
+    setMsgs((p) => [
+      ...p,
+      {
+        role: 'user',
+        text,
+      },
+    ]);
+
+    setInput('');
+
+    setTimeout(() => {
+      setMsgs((p) => [
+        ...p,
+        {
+          role: 'bot',
+          text: getBotReply(text),
+        },
+      ]);
+    }, 600);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-xs flex flex-col overflow-hidden"
+        style={{ height: 380 }}
+      >
+        {/* Header */}
+
+        <div className="bg-gradient-to-r from-green-700 to-emerald-600 px-4 py-3 flex items-center gap-2.5 shrink-0">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+
+          <div className="flex-1">
+            <p className="text-white font-bold text-sm leading-none">
+              Smart Village AI
+            </p>
+
+            <p className="text-white/60 text-xs mt-0.5">
+              Ask me anything
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Messages */}
+
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 bg-gray-50">
+          {msgs.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Bot className="h-5 w-5 text-green-600" />
+              </div>
+
+              <p className="text-gray-400 text-xs">
+                Ask about complaints, certificates,
+                <br />
+                schemes, notices, or registration.
+              </p>
+            </div>
+          )}
+
+          {msgs.map((m, i) => (
+            <div
+              key={i}
+              className={`flex gap-2 ${
+                m.role === 'user' ? 'flex-row-reverse' : ''
+              }`}
+            >
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                  m.role === 'bot'
+                    ? 'bg-green-100'
+                    : 'bg-blue-100'
+                }`}
+              >
+                {m.role === 'bot' ? (
+                  <Bot className="h-3.5 w-3.5 text-green-600" />
+                ) : (
+                  <User className="h-3.5 w-3.5 text-blue-600" />
+                )}
+              </div>
+
+              <div
+                className={`max-w-[78%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-line ${
+                  m.role === 'bot'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'bg-green-600 text-white'
+                }`}
+              >
+                {m.text}
+              </div>
+            </div>
+          ))}
+
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+
+        <div className="px-3 py-3 bg-white border-t border-gray-100 flex gap-2 shrink-0">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === 'Enter' && send()
+            }
+            placeholder="Type your question..."
+            className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-green-400"
+          />
+
+          <button
+            onClick={send}
+            disabled={!input.trim()}
+            className="w-9 h-9 bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white rounded-lg flex items-center justify-center transition-colors"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+MAIN PAGE
+══════════════════════════════════════════════════ */
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const features = [
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // =========================
+  // AUTH STATE
+  // =========================
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardPath, setDashboardPath] = useState('/dashboard');
+
+  // =========================
+  // CHECK LOGIN STATUS
+  // =========================
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+
+      // No login
+      if (!token) {
+        setIsLoggedIn(false);
+        setDashboardPath('/dashboard');
+        return;
+      }
+
+      try {
+        const decoded = jwtDecode(token);
+
+        // Admin logged in
+        if (decoded.role === 'admin') {
+          setIsLoggedIn(true);
+          setDashboardPath('/admin/dashboard');
+          return;
+        }
+
+        // User logged in
+        if (decoded.role === 'user') {
+          setIsLoggedIn(true);
+          setDashboardPath('/dashboard');
+          return;
+        }
+
+        // Unknown role
+        setIsLoggedIn(false);
+        setDashboardPath('/dashboard');
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('admin');
+        localStorage.removeItem('adminName');
+
+        setIsLoggedIn(false);
+        setDashboardPath('/dashboard');
+      }
+    };
+
+    checkAuth();
+
+    // Detect localStorage changes from other tabs
+    window.addEventListener('storage', checkAuth);
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+
+  // =========================
+  // LOGOUT
+  // =========================
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin');
+    localStorage.removeItem('adminName');
+
+    setIsLoggedIn(false);
+    setDashboardPath('/dashboard');
+    setMobileOpen(false);
+
+    navigate('/');
+  };
+
+  const scrollTo = (id) => {
+    document
+      .getElementById(id)
+      ?.scrollIntoView({
+        behavior: 'smooth',
+      });
+
+    setMobileOpen(false);
+  };
+
+  const services = [
     {
       icon: FileText,
-      title: 'Online Complaints',
-      description: 'Register and track your complaints easily with 21+ categories',
-      color: 'from-blue-500 to-blue-600',
+      title: 'Online Complaint',
+      desc: 'File & track complaints across 21+ categories.',
+      color: 'bg-blue-500',
+      light: 'bg-blue-50',
+      text: 'text-blue-600',
       link: '/complaint',
     },
     {
       icon: Gift,
-      title: 'Government Schemes',
-      description: 'Access all government schemes and apply online',
-      color: 'from-green-500 to-green-600',
+      title: 'Govt. Schemes',
+      desc: 'Browse and apply for all eligible government schemes.',
+      color: 'bg-green-500',
+      light: 'bg-green-50',
+      text: 'text-green-700',
       link: '/schemes',
     },
     {
       icon: Award,
       title: 'Certificates',
-      description: 'Apply for birth, death, income, and caste certificates',
-      color: 'from-purple-500 to-purple-600',
+      desc: 'Apply for birth, death, income & caste certificates.',
+      color: 'bg-purple-500',
+      light: 'bg-purple-50',
+      text: 'text-purple-600',
       link: '/certificates',
     },
     {
       icon: Megaphone,
       title: 'Notice Board',
-      description: 'Stay updated with latest village announcements',
-      color: 'from-orange-500 to-orange-600',
+      desc: 'Official village announcements and panchayat notices.',
+      color: 'bg-orange-500',
+      light: 'bg-orange-50',
+      text: 'text-orange-600',
       link: '/notices',
     },
-    {
-      icon: Users,
-      title: 'User Management',
-      description: 'Secure and easy registration for all villagers',
-      color: 'from-pink-500 to-pink-600',
-      link: '/register',
-    },
+  ];
+
+  const whyUs = [
     {
       icon: Shield,
-      title: 'Secure Portal',
-      description: 'Your data is safe with our encrypted platform',
-      color: 'from-indigo-500 to-indigo-600',
-      link: '/login',
+      title: 'Secure & Private',
+      desc: 'Your data is encrypted and shared only with authorised officials.',
     },
-  ];
-
-  const stats = [
-    { number: '500+', label: 'Registered Users', icon: Users },
-    { number: '1200+', label: 'Complaints Resolved', icon: CheckCircle },
-    { number: '50+', label: 'Active Schemes', icon: Gift },
-    { number: '24/7', label: 'Support Available', icon: Clock },
-  ];
-
-  const services = [
-    { name: 'Birth Certificate', icon: Award, link: '/certificates' },
-    { name: 'Death Certificate', icon: Award, link: '/certificates' },
-    { name: 'Income Certificate', icon: Award, link: '/certificates' },
-    { name: 'Caste Certificate', icon: Award, link: '/certificates' },
-    { name: 'Water Supply Issues', icon: FileText, link: '/complaint' },
-    { name: 'Road Maintenance', icon: FileText, link: '/complaint' },
-    { name: 'Street Light', icon: FileText, link: '/complaint' },
-    { name: 'Pension Schemes', icon: Gift, link: '/schemes' },
+    {
+      icon: Clock,
+      title: '24/7 Available',
+      desc: 'Access all services anytime, anywhere from your device.',
+    },
+    {
+      icon: CheckCircle,
+      title: 'Fast Processing',
+      desc: 'Digital applications processed faster than offline methods.',
+    },
+    {
+      icon: Sparkles,
+      title: 'AI-Powered Help',
+      desc: 'Get instant answers through our built-in AI assistant.',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+    <div className="min-h-screen bg-white font-sans">
+
+      {/* ══ NAVBAR ══ */}
+
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex items-center justify-between h-16">
+
             {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-green-600 to-blue-600 p-2 rounded-lg">
-                <Home className="h-6 w-6 text-white" />
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+                <Home className="h-5 w-5 text-white" />
               </div>
+
               <div>
-                <h1 className="text-xl font-bold text-gray-800">Smart Village</h1>
-                <p className="text-xs text-gray-600">Digital Gram Panchayat</p>
+                <p className="text-base font-bold text-gray-800 leading-none">
+                  Smart Village
+                </p>
+
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Digital Gram Panchayat
+                </p>
               </div>
             </div>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#home" className="text-gray-700 hover:text-green-600 font-semibold transition-colors">
+            {/* Desktop center links */}
+
+            <div className="hidden md:flex items-center gap-7">
+              <a
+                href="#home"
+                className="text-base font-semibold text-green-700 border-b-2 border-green-600 pb-0.5 transition-colors"
+              >
                 Home
               </a>
-              <a href="#features" className="text-gray-700 hover:text-green-600 font-semibold transition-colors">
-                Features
-              </a>
-              <a href="#services" className="text-gray-700 hover:text-green-600 font-semibold transition-colors">
+
+              <button
+                onClick={() => scrollTo('services')}
+                className="text-base font-semibold text-gray-600 hover:text-green-700 transition-colors flex items-center gap-1.5"
+              >
+                <Layers className="h-4 w-4" />
                 Services
-              </a>
-              <a href="#about" className="text-gray-700 hover:text-green-600 font-semibold transition-colors">
-                About
-              </a>
-              <a href="#contact" className="text-gray-700 hover:text-green-600 font-semibold transition-colors">
+              </button>
+
+              <button
+                onClick={() => scrollTo('contact')}
+                className="text-base font-semibold text-gray-600 hover:text-green-700 transition-colors flex items-center gap-1.5"
+              >
+                <HeadphonesIcon className="h-4 w-4" />
                 Contact
-              </a>
-            </div>
+              </button>
 
-            {/* Action Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
               <button
-                onClick={() => navigate('/register')}
-                className="px-5 py-2 text-green-600 border-2 border-green-600 rounded-lg hover:bg-green-50 transition-all font-semibold"
+                onClick={() => setChatOpen(true)}
+                className="flex items-center gap-1.5 text-base font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-1.5 rounded-lg transition-colors shadow-sm"
               >
-                Register
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="px-5 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => navigate('/admin/login')}
-                className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
-              >
-                Admin
+                <Sparkles className="h-4 w-4" />
+                Chat with AI
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Desktop auth buttons */}
+
+            <div className="hidden md:flex items-center gap-2.5">
+
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={() => navigate(dashboardPath)}
+                    className="flex items-center gap-2 px-5 py-2 text-base font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </button>
+
+                  <button
+                    onClick={handleLogout}
+                    className="px-5 py-2 text-base font-bold text-red-600 border-2 border-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="px-5 py-2 text-base font-bold text-green-700 border-2 border-green-600 rounded-lg hover:bg-green-50 transition-colors"
+                  >
+                    Login
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="px-5 py-2 text-base font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm"
+                  >
+                    Register
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/admin/login')}
+                    className="px-5 py-2 text-base font-bold bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors shadow-sm"
+                  >
+                    Admin
+                  </button>
+                </>
+              )}
+
+            </div>
+
+            {/* Mobile hamburger */}
+
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setMobileOpen(true)}
+              className="md:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <Menu className="h-6 w-6 text-gray-700" />
             </button>
-          </div>
 
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden pb-4 space-y-3">
-              <a href="#home" className="block text-gray-700 hover:text-green-600 font-semibold py-2">
-                Home
-              </a>
-              <a href="#features" className="block text-gray-700 hover:text-green-600 font-semibold py-2">
-                Features
-              </a>
-              <a href="#services" className="block text-gray-700 hover:text-green-600 font-semibold py-2">
-                Services
-              </a>
-              <a href="#about" className="block text-gray-700 hover:text-green-600 font-semibold py-2">
-                About
-              </a>
-              <a href="#contact" className="block text-gray-700 hover:text-green-600 font-semibold py-2">
-                Contact
-              </a>
-              <div className="space-y-2 pt-2">
-                <button
-                  onClick={() => navigate('/register')}
-                  className="w-full px-5 py-2 text-green-600 border-2 border-green-600 rounded-lg hover:bg-green-50 transition-all font-semibold"
-                >
-                  Register
-                </button>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full px-5 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => navigate('/admin/login')}
-                  className="w-full px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold"
-                >
-                  Admin
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section id="home" className="relative bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 text-white py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="inline-block bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <p className="text-sm font-semibold">🇮🇳 Digital India Initiative</p>
+      {/* ══ MOBILE MENU — full-screen overlay ══ */}
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+                <Home className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                Welcome to<br />
-                <span className="text-yellow-300">Smart Village</span><br />
-                Digital Portal
-              </h1>
-              <p className="text-xl text-white/90 leading-relaxed">
-                Empowering rural communities through digital transformation. Access government services, file complaints, and stay connected with your village administration.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-4">
+
+              <div>
+                <p className="text-base font-bold text-gray-800 leading-none">
+                  Smart Village
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  Digital Gram Panchayat
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100"
+            >
+              <X className="h-5 w-5 text-gray-700" />
+            </button>
+
+          </div>
+
+          <div className="flex-1 flex flex-col px-5 py-6 gap-2 overflow-y-auto">
+
+            <button
+              onClick={() => {
+                scrollTo('home');
+                setMobileOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-4 rounded-xl text-lg font-bold text-green-700 bg-green-50 border border-green-100 w-full text-left"
+            >
+              <Home className="h-5 w-5" />
+              Home
+            </button>
+
+            <button
+              onClick={() => scrollTo('services')}
+              className="flex items-center gap-3 px-4 py-4 rounded-xl text-lg font-bold text-gray-700 hover:bg-gray-50 border border-gray-100 w-full text-left"
+            >
+              <Layers className="h-5 w-5 text-green-600" />
+              Services
+            </button>
+
+            <button
+              onClick={() => scrollTo('contact')}
+              className="flex items-center gap-3 px-4 py-4 rounded-xl text-lg font-bold text-gray-700 hover:bg-gray-50 border border-gray-100 w-full text-left"
+            >
+              <HeadphonesIcon className="h-5 w-5 text-green-600" />
+              Contact
+            </button>
+
+            <button
+              onClick={() => {
+                setChatOpen(true);
+                setMobileOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-4 rounded-xl text-lg font-bold text-white bg-green-600 border border-green-600 w-full text-left"
+            >
+              <Sparkles className="h-5 w-5" />
+              Chat with AI
+            </button>
+
+          </div>
+
+          {/* Mobile auth buttons */}
+
+          <div className="px-5 pb-8 space-y-3">
+
+            {isLoggedIn ? (
+              <>
                 <button
-                  onClick={() => navigate('/register')}
-                  className="px-8 py-4 bg-white text-green-600 rounded-lg hover:shadow-2xl transition-all font-bold text-lg flex items-center space-x-2"
+                  onClick={() => {
+                    navigate(dashboardPath);
+                    setMobileOpen(false);
+                  }}
+                  className="w-full py-4 flex items-center justify-center gap-2 text-base font-bold bg-green-600 hover:bg-green-700 text-white rounded-2xl transition-colors shadow-md"
                 >
-                  <span>Get Started</span>
-                  <ArrowRight className="h-5 w-5" />
+                  <LayoutDashboard className="h-5 w-5" />
+                  Dashboard
                 </button>
+
                 <button
-                  onClick={() => navigate('/login')}
-                  className="px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white text-white rounded-lg hover:bg-white/20 transition-all font-bold text-lg"
+                  onClick={handleLogout}
+                  className="w-full py-4 text-base font-bold text-red-600 border-2 border-red-500 rounded-2xl hover:bg-red-50 transition-colors"
                 >
-                  Login Now
+                  Logout
                 </button>
-              </div>
-              <div className="flex items-center space-x-8 pt-6">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-6 w-6 text-green-300" />
-                  <span className="font-semibold">100% Secure</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-6 w-6 text-green-300" />
-                  <span className="font-semibold">24/7 Available</span>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
-                <img
-                  src={villageImg}
-                  alt="Digital Village"
-                  className="rounded-2xl shadow-2xl w-full"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Statistics Section */}
-      <section className="bg-white py-16 -mt-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg p-6 text-center hover:shadow-xl transition-all border border-gray-100">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-green-500 to-blue-500 rounded-full mb-4">
-                    <Icon className="h-7 w-7 text-white" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-gray-800 mb-2">{stat.number}</h3>
-                  <p className="text-gray-600 font-semibold">{stat.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="bg-gradient-to-br from-gray-50 to-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-block bg-green-100 px-4 py-2 rounded-full mb-4">
-              <p className="text-green-700 font-bold text-sm">OUR FEATURES</p>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-              Why Choose Smart Village?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              A comprehensive digital platform designed to make village administration transparent, efficient, and accessible to all.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl transition-all hover:transform hover:-translate-y-2 border border-gray-100"
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    navigate('/login');
+                    setMobileOpen(false);
+                  }}
+                  className="w-full py-4 text-base font-bold text-green-700 border-2 border-green-600 rounded-2xl hover:bg-green-50 transition-colors"
                 >
-                  <div className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-xl mb-4`}>
-                    <Icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                  <button 
-                    onClick={() => navigate(feature.link)}
-                    className="mt-4 text-green-600 font-semibold flex items-center space-x-1 hover:space-x-2 transition-all"
-                  >
-                    <span>Learn more</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                  Login
+                </button>
 
-      {/* Services Section */}
-      <section id="services" className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-block bg-blue-100 px-4 py-2 rounded-full mb-4">
-              <p className="text-blue-700 font-bold text-sm">OUR SERVICES</p>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-              Popular Services
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Access all essential village services from the comfort of your home.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {services.map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={index}
-                  onClick={() => navigate(service.link)}
-                  className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 text-center hover:shadow-lg transition-all border-2 border-gray-100 hover:border-green-500 cursor-pointer"
+                <button
+                  onClick={() => {
+                    navigate('/register');
+                    setMobileOpen(false);
+                  }}
+                  className="w-full py-4 text-base font-bold bg-green-600 hover:bg-green-700 text-white rounded-2xl transition-colors shadow-md"
                 >
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg mb-3">
-                    <Icon className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-800">{service.name}</h3>
-                </div>
-              );
-            })}
+                  Register
+                </button>
+
+                <button
+                  onClick={() => {
+                    navigate('/admin/login');
+                    setMobileOpen(false);
+                  }}
+                  className="w-full py-4 text-base font-bold bg-gray-900 hover:bg-gray-800 text-white rounded-2xl transition-colors shadow-md"
+                >
+                  Admin Login
+                </button>
+              </>
+            )}
+
           </div>
         </div>
-      </section>
+      )}
 
-      {/* How It Works Section */}
-      <section className="bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              Get started in just three simple steps
-            </p>
-          </div>
+      {/* ══ HERO ══ */}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-green-600">1</span>
-              </div>
-              <div className="flex items-center space-x-3 mb-4">
-                <Smartphone className="h-8 w-8 text-yellow-300" />
-                <h3 className="text-2xl font-bold">Register</h3>
-              </div>
-              <p className="text-white/90 leading-relaxed">
-                Create your account with basic details and verify your identity
-              </p>
-            </div>
+      <section
+        id="home"
+        className="relative overflow-hidden"
+        style={{ minHeight: 580 }}
+      >
+        <div className="absolute inset-0">
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-blue-600">2</span>
-              </div>
-              <div className="flex items-center space-x-3 mb-4">
-                <Globe className="h-8 w-8 text-yellow-300" />
-                <h3 className="text-2xl font-bold">Access Services</h3>
-              </div>
-              <p className="text-white/90 leading-relaxed">
-                Browse and access all available village services and schemes
-              </p>
-            </div>
+          <img
+            src={homePageImg}
+            alt="Jharkhand village landscape"
+            className="w-full h-full object-cover"
+          />
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-purple-600">3</span>
-              </div>
-              <div className="flex items-center space-x-3 mb-4">
-                <TrendingUp className="h-8 w-8 text-yellow-300" />
-                <h3 className="text-2xl font-bold">Track Progress</h3>
-              </div>
-              <p className="text-white/90 leading-relaxed">
-                Monitor your applications and complaints in real-time
-              </p>
-            </div>
-          </div>
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(5,35,15,0.80) 0%, rgba(10,45,20,0.60) 50%, rgba(5,25,10,0.70) 100%)',
+            }}
+          />
+
         </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-green-600 to-blue-600 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            Ready to Get Started?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join thousands of villagers who are already using our platform to access government services.
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-20 md:py-28">
+
+          {/* Badge — Jharkhand specific */}
+
+          <div className="inline-flex items-center gap-2 bg-green-800/70 backdrop-blur-sm border border-green-500/40 text-white text-base font-bold px-5 py-2 rounded-full mb-8 tracking-wide">
+            🌿 झारखंड डिजिटल ग्राम पोर्टल — Sashakt Gaon, Samarth Jharkhand
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight mb-5">
+            Welcome to{' '}
+            <span className="text-yellow-400">
+              Smart Village
+            </span>
+            <br />
+            Digital Portal
+          </h1>
+
+          <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
+            Access government services, file complaints, and stay connected with your Gram Panchayat administration — all from one place.
           </p>
+
           <div className="flex flex-wrap justify-center gap-4">
+
             <button
               onClick={() => navigate('/register')}
-              className="px-8 py-4 bg-white text-green-600 rounded-lg hover:shadow-2xl transition-all font-bold text-lg"
+              className="flex items-center gap-2 px-8 py-3.5 bg-white text-green-700 rounded-xl font-bold text-base shadow-xl hover:shadow-2xl transition-all hover:-translate-y-0.5"
             >
-              Register Now
+              Get Started
+              <ArrowRight className="h-5 w-5" />
             </button>
+
             <button
               onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-white/10 backdrop-blur-sm border-2 border-white text-white rounded-lg hover:bg-white/20 transition-all font-bold text-lg"
+              className="px-8 py-3.5 bg-gray-900/80 border border-white/25 text-white rounded-xl font-bold text-base shadow-xl hover:bg-gray-900 transition-all hover:-translate-y-0.5"
             >
-              Login
+              Login Now
             </button>
+
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer id="contact" className="bg-gray-900 text-white py-16">
+      {/* ══ OUR SERVICES ══ */}
+
+      <section
+        id="services"
+        className="py-16 md:py-20 bg-gray-50"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* About */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-green-600 to-blue-600 p-2 rounded-lg">
-                  <Home className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold">Smart Village</h3>
-                  <p className="text-xs text-gray-400">Digital Portal</p>
-                </div>
-              </div>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Empowering rural India through digital transformation and making government services accessible to all.
-              </p>
-            </div>
 
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-bold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#home" className="text-gray-400 hover:text-white transition-colors">Home</a></li>
-                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="#services" className="text-gray-400 hover:text-white transition-colors">Services</a></li>
-                <li><a href="#about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-              </ul>
-            </div>
+          <div className="text-center mb-12">
 
-            {/* Services */}
-            <div>
-              <h3 className="text-lg font-bold mb-4">Services</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Complaints</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Certificates</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Schemes</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Notices</a></li>
-              </ul>
-            </div>
+            <div className="w-10 h-1 bg-green-600 rounded-full mx-auto mb-4" />
 
-            {/* Contact */}
-            <div>
-              <h3 className="text-lg font-bold mb-4">Contact Us</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-3">
-                  <MapPin className="h-5 w-5 text-green-500" />
-                  <span className="text-gray-400 text-sm">Rampur, Uttar Pradesh</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Phone className="h-5 w-5 text-green-500" />
-                  <span className="text-gray-400 text-sm">+91 98765 43210</span>
-                </li>
-                <li className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-green-500" />
-                  <span className="text-gray-400 text-sm">info@smartvillage.in</span>
-                </li>
-              </ul>
-            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800">
+              Our Services
+            </h2>
+
+            <p className="text-gray-500 text-base mt-2">
+              Everything you need, in one place
+            </p>
+
           </div>
 
-          {/* Bottom */}
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
-              © 2026 Smart Village. All rights reserved.
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+
+            {services.map((s) => {
+              const Icon = s.icon;
+
+              return (
+                <div
+                  key={s.title}
+                  onClick={() => navigate(s.link)}
+                  className="bg-white rounded-2xl p-5 md:p-7 shadow-sm hover:shadow-lg border border-gray-100 cursor-pointer transition-all hover:-translate-y-1 group"
+                >
+                  <div
+                    className={`w-12 h-12 md:w-14 md:h-14 ${s.light} rounded-xl flex items-center justify-center mb-4`}
+                  >
+                    <Icon
+                      className={`h-6 w-6 md:h-7 md:w-7 ${s.text}`}
+                    />
+                  </div>
+
+                  <h3 className="font-bold text-gray-800 text-lg mb-2">
+                    {s.title}
+                  </h3>
+
+                  <p className="text-gray-500 text-base leading-relaxed mb-4 hidden sm:block">
+                    {s.desc}
+                  </p>
+
+                  <span
+                    className={`flex items-center gap-1 text-base font-semibold ${s.text}`}
+                  >
+                    Go to service
+                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </div>
+              );
+            })}
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══ WHY CHOOSE ══ */}
+
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <div className="text-center mb-12">
+
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800">
+              Why Choose Smart Village?
+            </h2>
+
+            <p className="text-gray-500 text-base mt-3 max-w-lg mx-auto">
+              A trusted digital platform built for every villager — simple, secure, and always online.
             </p>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
+
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            {whyUs.map((w) => {
+              const Icon = w.icon;
+
+              return (
+                <div
+                  key={w.title}
+                  className="flex gap-4 p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-green-200 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+                    <Icon className="h-6 w-6 text-green-700" />
+                  </div>
+
+                  <div>
+                    <p className="font-bold text-gray-800 text-lg">
+                      {w.title}
+                    </p>
+
+                    <p className="text-gray-500 text-base mt-1 leading-relaxed">
+                      {w.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FOOTER ══ */}
+
+      <footer
+        id="contact"
+        className="bg-gray-950 text-white"
+      >
+
+        {/* Top band */}
+
+        <div className="border-b border-white/5 py-14">
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+
+            {/* Brand col */}
+
+            <div className="lg:col-span-1">
+
+              <div className="flex items-center gap-3 mb-5">
+
+                <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-900/40">
+                  <Home className="h-5 w-5 text-white" />
+                </div>
+
+                <div>
+                  <p className="text-base font-extrabold leading-none">
+                    Smart Village
+                  </p>
+
+                  <p className="text-gray-500 text-sm mt-0.5">
+                    Digital Gram Panchayat
+                  </p>
+                </div>
+
+              </div>
+
+              <p className="text-gray-400 text-base leading-relaxed mb-6">
+                Bringing government services closer to every citizen of Jharkhand — anytime, anywhere.
+              </p>
+
+              <div className="inline-flex items-center gap-2 bg-green-900/40 border border-green-700/40 text-green-400 text-sm font-semibold px-3 py-1.5 rounded-full">
+                🌿 Sashakt Gaon, Samarth Jharkhand
+              </div>
+
+            </div>
+
+            {/* Services col */}
+
+            <div>
+
+              <p className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-5">
+                Services
+              </p>
+
+              <ul className="space-y-3">
+
+                {[
+                  {
+                    label: 'Online Complaint',
+                    href: '/complaint',
+                  },
+                  {
+                    label: 'Govt. Schemes',
+                    href: '/schemes',
+                  },
+                  {
+                    label: 'Certificates',
+                    href: '/certificates',
+                  },
+                  {
+                    label: 'Notice Board',
+                    href: '/notices',
+                  },
+                  {
+                    label: 'My Dashboard',
+                    href: '/dashboard',
+                  },
+                ].map((l) => (
+                  <li key={l.label}>
+
+                    <button
+                      onClick={() => navigate(l.href)}
+                      className="flex items-center gap-2 text-gray-400 hover:text-green-400 text-base transition-colors group"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-600 group-hover:text-green-400 group-hover:translate-x-0.5 transition-transform" />
+                      {l.label}
+                    </button>
+
+                  </li>
+                ))}
+
+              </ul>
+            </div>
+
+            {/* Quick links col */}
+
+            <div>
+
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-5">
+                Quick Links
+              </p>
+
+              <ul className="space-y-3">
+
+                {[
+                  {
+                    label: 'Login',
+                    href: '/login',
+                  },
+                  {
+                    label: 'Register',
+                    href: '/register',
+                  },
+                  {
+                    label: 'Admin Login',
+                    href: '/admin/login',
+                  },
+                  {
+                    label: 'My Complaints',
+                    href: '/my-complaints',
+                  },
+                  {
+                    label: 'Notifications',
+                    href: '/notifications',
+                  },
+                ].map((l) => (
+                  <li key={l.label}>
+
+                    <button
+                      onClick={() => navigate(l.href)}
+                      className="flex items-center gap-2 text-gray-400 hover:text-green-400 text-base transition-colors group"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-600 group-hover:text-green-400 group-hover:translate-x-0.5 transition-transform" />
+                      {l.label}
+                    </button>
+
+                  </li>
+                ))}
+
+              </ul>
+            </div>
+
+            {/* Contact col */}
+
+            <div>
+
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-5">
+                Contact Us
+              </p>
+
+              <ul className="space-y-4">
+
+                <li className="flex items-start gap-3">
+
+                  <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Mail className="h-3.5 w-3.5 text-green-400" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600 mb-0.5">
+                      Email
+                    </p>
+
+                    <p className="text-base text-gray-300">
+                      info@smartvillage.in
+                    </p>
+                  </div>
+
+                </li>
+
+                <li className="flex items-start gap-3">
+
+                  <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <Phone className="h-3.5 w-3.5 text-green-400" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600 mb-0.5">
+                      Helpline
+                    </p>
+
+                    <p className="text-base text-gray-300">
+                      +91 98765 43210
+                    </p>
+                  </div>
+
+                </li>
+
+                <li className="flex items-start gap-3">
+
+                  <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                    <HeadphonesIcon className="h-3.5 w-3.5 text-green-400" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600 mb-0.5">
+                      Support Hours
+                    </p>
+
+                    <p className="text-base text-gray-300">
+                      Mon – Sat, 9 AM – 6 PM
+                    </p>
+                  </div>
+
+                </li>
+
+              </ul>
+
+              <button
+                onClick={() => setChatOpen(true)}
+                className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-700/30 border border-green-600/40 text-green-400 rounded-xl text-base font-semibold hover:bg-green-700/50 transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                Chat with AI Assistant
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+
+        <div className="py-5">
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+            <p className="text-gray-600 text-sm text-center sm:text-left">
+              © 2026 Smart Village Jharkhand — Gram Panchayat Digital Services. All rights reserved.
+            </p>
+
+            <div className="flex items-center gap-4">
+
+              <span className="text-gray-700 text-sm hover:text-gray-400 cursor-pointer transition-colors">
+                Privacy Policy
+              </span>
+
+              <span className="text-gray-700 text-sm hover:text-gray-400 cursor-pointer transition-colors">
+                Terms of Use
+              </span>
+
+              <span className="text-gray-700 text-sm hover:text-gray-400 cursor-pointer transition-colors">
+                RTI
+              </span>
+
             </div>
           </div>
         </div>
+
       </footer>
+
+      {/* ══ AI CHAT ══ */}
+
+      {chatOpen && (
+        <HelpChat
+          onClose={() => setChatOpen(false)}
+        />
+      )}
+
     </div>
   );
 }

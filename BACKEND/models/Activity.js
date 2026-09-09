@@ -8,6 +8,7 @@ const activitySchema = new mongoose.Schema(
       default: null,
     },
 
+    // Notification audience
     audience: {
       type: String,
       enum: ["user", "admin", "all"],
@@ -30,18 +31,15 @@ const activitySchema = new mongoose.Schema(
         "PASSWORD_RESET",
         "ACCOUNT_DELETED",
 
-        // Complaint
         "COMPLAINT_SUBMITTED",
         "COMPLAINT_IN_PROGRESS",
         "COMPLAINT_RESOLVED",
         "COMPLAINT_REJECTED",
 
-        // Certificate
         "CERTIFICATE_APPLIED",
         "CERTIFICATE_APPROVED",
         "CERTIFICATE_REJECTED",
 
-        // Scheme & Notice
         "NEW_SCHEME",
         "NEW_NOTICE",
       ],
@@ -56,18 +54,18 @@ const activitySchema = new mongoose.Schema(
 
     description: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
 
     route: {
       type: String,
-      default: "/",
+      default: "",
     },
 
     isNotification: {
       type: Boolean,
-      default: true,
+      default: false,
     },
 
     isRead: {
@@ -75,10 +73,10 @@ const activitySchema = new mongoose.Schema(
       default: false,
     },
 
-    priority:{
-        type: String,
-        enum:["low", "medium", "high", "urgent"],
-        default: "medium",
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high", "urgent"],
+      default: "low",
     },
 
     status: {
@@ -86,10 +84,42 @@ const activitySchema = new mongoose.Schema(
       enum: ["pending", "completed", "rejected"],
       default: "completed",
     },
+
+  
+    // PANCHAYAT SCOPE
+    panchayat: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    panchayatCode: {
+      type: Number,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+
+// INDEXES
+activitySchema.index({
+  user: 1,
+  createdAt: -1,
+});
+
+activitySchema.index({
+  audience: 1,
+  panchayatCode: 1,
+  createdAt: -1,
+});
+
+activitySchema.index({
+  panchayatCode: 1,
+  createdAt: -1,
+});
+
 
 module.exports = mongoose.model("Activity", activitySchema);

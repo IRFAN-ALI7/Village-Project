@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Eye, Download, Calendar, ChevronLeft, ChevronRight, MapPin, X, Image as ImageIcon, Trash2, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
 import API_URL from '../../config/api';
+import toast from "react-hot-toast";
 
 export default function MyComplaints() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,7 +17,7 @@ useEffect(()=> {
   const token = localStorage.getItem("token");
   const fetchData = async()=> {
     try{
-      const res = await fetch(`${API_URL}/my-complaints`, {
+      const res = await fetch(`${API_URL}/user/my-complaints`, {
         method: "GET",
         headers:{
           Authorization: `Bearer ${token}`
@@ -40,7 +41,7 @@ useEffect(()=> {
 
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${API_URL}/complaints/${complaintId}`, {
+        const res = await fetch(`${API_URL}/user/complaints/${complaintId}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`
@@ -48,11 +49,11 @@ useEffect(()=> {
         });
         const data = await res.json();
         if(res.ok){
-          alert(data.message);
+          toast.success(data.message);
          setComplaints(complaints.filter(c => c.complaintId !== complaintId));
          setSelectedComplaint(null);
         }else{
-          alert(data.message);
+          toast.error(data.message);
         }
       }catch(err){
         console.log(err);

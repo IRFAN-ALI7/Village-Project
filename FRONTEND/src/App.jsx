@@ -6,7 +6,7 @@ import ComplaintPage from "./pages/ComplaintPage";
 import MyComplaintsPage from "./pages/MyComplaintsPage";
 import UserNotificationPage from "./pages/UserNotificationPage";
 import ProfilePage from "./pages/ProfilePage";
-import ProtectedRoute from "./components/ProtectedRoute.";
+import ProtectedRoute from "./components/ProtectedRoute";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import AuthRoute from "./components/AuthRoute";
 import NoticePage from "./pages/NoticePage";
@@ -14,8 +14,9 @@ import HomePage from "./pages/HomePage";
 import RegistrationPage from "./pages/RegistrationPage";
 import CertificatesPage from "./pages/CertificatesPages";
 import SchemesPage from "./pages/SchemesPage";
+import NotFound from "./pages/NotFound";
+
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminRegister from "./pages/admin/AdminRegister";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
@@ -24,6 +25,22 @@ import AdminNoticesPage from "./pages/admin/AdminNoticesPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import  AdminCertificatesPage from "./pages/admin/AdminCertificatePage";
 import  AdminSettingsPage  from "./pages/admin/AdminSettingsPage";
+import  AdminOfficialNoticesPage  from './pages/admin/AdminOfficialNoticesPage';
+
+import  SuperAdminLogin  from './pages/super-admin/SuperAdminLogin';
+import  SuperAdminDashboard  from './pages/super-admin/dashboard/SuperAdminDashboard';
+import  Admins  from './pages/super-admin/admins/Admins';
+import  CreateAdmin  from './pages/super-admin/admins/CreateAdmin';
+import  AdminDetails  from './pages/super-admin/admins/AdminDetails';
+import  EditAdmin  from './pages/super-admin/admins/EditAdmin';
+import  Panchayats  from './pages/super-admin/panchayats/Panchayats';
+import  PanchayatDetails  from './pages/super-admin/panchayats/PanchayatDetails';
+import  Notices  from './pages/super-admin/notices/Notices';
+import  CreateNotice  from './pages/super-admin/notices/CreateNotice';
+import  NoticeDetails  from './pages/super-admin/notices/NoticeDetails';
+import  SuperAdminProfile  from './pages/super-admin/profile/SuperAdminProfile';
+import  ChangePassword  from './pages/super-admin/profile/ChangePassword';
+import SuperAdminProtectedRoute from "./components/SuperAdminProtectedRoute";
 
 function App() {
   return (
@@ -54,18 +71,20 @@ function App() {
 
     <BrowserRouter>
     <Routes>
-
+      {/* user */}
       <Route
        path="/" 
        element={ <HomePage/>}
       />
 
       <Route
-       path="/register"
-         element = {
-        <RegistrationPage/>
-      }
-      />
+        path="/register"
+        element={
+        <AuthRoute>
+        <RegistrationPage />
+        </AuthRoute>
+       }
+        />
 
        <Route
            path="/login"
@@ -146,14 +165,15 @@ function App() {
       </ProtectedRoute>
     }
      />
-
-      <Route path="/admin/register"
-      element = {<AdminRegister/>}
-      />
-
-      <Route path="/admin/login"
-      element = {<AdminLogin/>}
-      />
+{/* admin */}
+      <Route
+       path="/admin/login"
+        element={
+        <AuthRoute>
+         <AdminLogin />
+        </AuthRoute>
+        }
+         />
 
        <Route path="/admin/dashboard"
            element ={
@@ -226,6 +246,140 @@ function App() {
          }
        />
 
+       <Route
+         path="/admin/official-notices"
+          element={
+         <AdminProtectedRoute>
+           <AdminOfficialNoticesPage />
+          </AdminProtectedRoute>
+         }
+       />
+
+       {/* ================= SUPER ADMIN ================= */}
+
+{/* Super Admin Login - Public */}
+<Route
+  path="/super-admin/login"
+  element={<SuperAdminLogin />}
+/>
+
+{/* Super Admin Dashboard */}
+<Route
+  path="/super-admin/dashboard"
+  element={
+    <SuperAdminProtectedRoute>
+      <SuperAdminDashboard />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+{/* Admin Management */}
+<Route
+  path="/super-admin/admins"
+  element={
+    <SuperAdminProtectedRoute>
+      <Admins />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/admins/create"
+  element={
+    <SuperAdminProtectedRoute>
+      <CreateAdmin />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/admins/:id"
+  element={
+    <SuperAdminProtectedRoute>
+      <AdminDetails />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/admins/:id/edit"
+  element={
+    <SuperAdminProtectedRoute>
+      <EditAdmin />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+{/* Panchayat Management */}
+<Route
+  path="/super-admin/panchayats"
+  element={
+    <SuperAdminProtectedRoute>
+      <Panchayats />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/panchayats/:panchayatCode"
+  element={
+    <SuperAdminProtectedRoute>
+      <PanchayatDetails />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+{/* Super Admin Notices */}
+<Route
+  path="/super-admin/notices"
+  element={
+    <SuperAdminProtectedRoute>
+      <Notices />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/notices/create"
+  element={
+    <SuperAdminProtectedRoute>
+      <CreateNotice />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/notices/:id"
+  element={
+    <SuperAdminProtectedRoute>
+      <NoticeDetails />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+{/* Super Admin Profile */}
+<Route
+  path="/super-admin/profile"
+  element={
+    <SuperAdminProtectedRoute>
+      <SuperAdminProfile />
+    </SuperAdminProtectedRoute>
+  }
+/>
+
+<Route
+  path="/super-admin/profile/change-password"
+  element={
+    <SuperAdminProtectedRoute>
+      <ChangePassword />
+    </SuperAdminProtectedRoute>
+  }
+/>
+    <Route
+     path="*" 
+     element={<NotFound />}
+      />   
+      
       </Routes>
     </BrowserRouter>
     </>

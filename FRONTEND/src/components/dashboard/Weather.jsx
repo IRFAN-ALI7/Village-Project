@@ -1,578 +1,2231 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  RefreshCw, MapPin, Droplets, Wind, Eye, Sun, Sunset,
-  ArrowUp, ArrowDown, CloudRain, Zap, CloudSun, Cloud,
-  CloudDrizzle, Navigation, Thermometer, ChevronDown, ChevronUp,
-  Tractor, Umbrella, ShieldAlert, Flame, Activity
-} from 'lucide-react';
+  MapPin,
+  Search,
+  Droplets,
+  Cloud,
+  Wind,
+  Navigation,
+  Gauge,
+  Eye,
+  Sunrise,
+  Sunset,
+  Leaf,
+  Clock,
+  Umbrella,
+  RefreshCw,
+  CalendarDays,
+  ChevronDown,
+  ArrowUp,
+  ArrowDown,
+  ShieldAlert,
+  Flame,
+  Zap,
+  LocateFixed,
+  CloudRain,
+  CloudDrizzle,
+  CloudSun,
+  Sun,
+} from "lucide-react";
 import axios from "axios";
 
+import sunnyBg from "../../assets/weather/sunny.jpg";
+import partlyCloudyBg from "../../assets/weather/partly-cloudy.jpg";
+import cloudyBg from "../../assets/weather/cloudy.jpg";
+import rainBg from "../../assets/weather/rain.jpg";
+import thunderstormBg from "../../assets/weather/thunderstorm.jpg";
+import fogBg from "../../assets/weather/fog.jpg";
+import snowBg from "../../assets/weather/snow.jpg";
+import summerBg from "../../assets/weather/summer.jpg";
 
+/* =========================================================
+   CONFIG
+========================================================= */
 
-/* ── Condition config ── */
-const conditionCfg = {
-  'sunny':         { icon: Sun,          gradient: 'from-amber-400 via-orange-400 to-orange-500', glow: 'shadow-orange-300',  label: 'Sunny',          animClass: 'animate-spin-slow'   },
-  'partly-cloudy': { icon: CloudSun,     gradient: 'from-sky-400 via-blue-400 to-cyan-500',       glow: 'shadow-blue-300',    label: 'Partly Cloudy',  animClass: 'animate-float'       },
-  'cloudy':        { icon: Cloud,        gradient: 'from-slate-400 via-gray-400 to-gray-500',     glow: 'shadow-gray-300',    label: 'Cloudy',         animClass: 'animate-float'       },
-  'rainy':         { icon: CloudRain,    gradient: 'from-blue-500 via-indigo-500 to-indigo-600',  glow: 'shadow-indigo-300',  label: 'Rainy',          animClass: 'animate-bounce-slow' },
-  'drizzle':       { icon: CloudDrizzle, gradient: 'from-teal-400 via-cyan-400 to-cyan-500',      glow: 'shadow-cyan-300',    label: 'Drizzle',        animClass: 'animate-bounce-slow' },
-  'thunderstorm':  { icon: Zap,          gradient: 'from-purple-600 via-violet-600 to-gray-700',  glow: 'shadow-purple-300',  label: 'Thunderstorm',   animClass: 'animate-pulse'       },
+const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api"
+).replace(/\/$/, "");
+
+const OPENWEATHER_BASE_URL =
+  "https://api.openweathermap.org";
+
+/* =========================================================
+   BACKGROUND MAP
+========================================================= */
+
+const BG_MAP = {
+  sunny: sunnyBg,
+  "partly-cloudy": partlyCloudyBg,
+  cloudy: cloudyBg,
+  rain: rainBg,
+  thunderstorm: thunderstormBg,
+  fog: fogBg,
+  snow: snowBg,
+  summer: summerBg,
 };
 
-/* ── Advisory per condition ── */
-const advisoryCfg = {
-  'sunny': {
-    icon: Flame, title: 'Sunny Advisory',
-    text: 'High UV levels today. Avoid field work between 11 AM and 3 PM. Irrigate crops in the early morning or evening. Keep livestock in shade and ensure adequate water supply.',
-    bg: 'bg-amber-50', border: 'border-amber-200', iconCls: 'text-amber-500',
-    badge: 'Hot & Sunny', badgeCls: 'bg-amber-100 text-amber-700',
-  },
-  'partly-cloudy': {
-    icon: Tractor, title: "Today's Advisory",
-    text: 'Mild and pleasant conditions. Good day for field work in the morning. Avoid heavy irrigation — moderate humidity is sufficient. Check crop health and apply fertilizers if needed.',
-    bg: 'bg-sky-50', border: 'border-sky-200', iconCls: 'text-sky-500',
-    badge: 'Favorable', badgeCls: 'bg-sky-100 text-sky-700',
-  },
-  'cloudy': {
-    icon: Cloud, title: 'Cloudy Advisory',
-    text: 'Overcast skies expected. Moderate farming activity recommended. Watch out for sudden rain showers. Postpone pesticide spraying and avoid outdoor drying of produce.',
-    bg: 'bg-slate-50', border: 'border-slate-200', iconCls: 'text-slate-500',
-    badge: 'Moderate', badgeCls: 'bg-slate-100 text-slate-700',
-  },
-  'rainy': {
-    icon: Umbrella, title: 'Rain Advisory',
-    text: 'Heavy rainfall expected. Avoid all field activities. Ensure proper drainage in paddy and vegetable fields to prevent waterlogging. Store harvested produce safely in dry areas.',
-    bg: 'bg-blue-50', border: 'border-blue-200', iconCls: 'text-blue-500',
-    badge: 'Rain Alert', badgeCls: 'bg-blue-100 text-blue-700',
-  },
-  'drizzle': {
-    icon: CloudDrizzle, title: 'Drizzle Advisory',
-    text: 'Light drizzle throughout the day. Postpone spraying of pesticides and fertilizers. Light field work is possible but use waterproof protective clothing. Monitor for fungal disease.',
-    bg: 'bg-teal-50', border: 'border-teal-200', iconCls: 'text-teal-500',
-    badge: 'Light Rain', badgeCls: 'bg-teal-100 text-teal-700',
-  },
-  'thunderstorm': {
-    icon: ShieldAlert, title: 'Thunderstorm Warning',
-    text: 'Severe thunderstorm alert. Do NOT go into open fields. Disconnect electrical equipment. Move livestock to covered shelters immediately. Stay indoors until conditions improve.',
-    bg: 'bg-purple-50', border: 'border-purple-200', iconCls: 'text-purple-600',
-    badge: 'Critical', badgeCls: 'bg-purple-100 text-purple-700',
-  },
+/* =========================================================
+   OVERLAY MAP
+========================================================= */
+
+const OVERLAY_MAP = {
+  sunny:
+    "linear-gradient(180deg,rgba(5,15,5,0.30) 0%,rgba(5,20,5,0.18) 50%,rgba(0,12,5,0.38) 100%)",
+
+  "partly-cloudy":
+    "linear-gradient(180deg,rgba(10,18,28,0.35) 0%,rgba(8,22,38,0.22) 50%,rgba(4,14,20,0.42) 100%)",
+
+  cloudy:
+    "linear-gradient(180deg,rgba(20,25,30,0.52) 0%,rgba(22,28,34,0.36) 50%,rgba(14,18,24,0.58) 100%)",
+
+  rain:
+    "linear-gradient(180deg,rgba(8,16,44,0.58) 0%,rgba(10,28,56,0.42) 40%,rgba(4,18,38,0.64) 100%)",
+
+  thunderstorm:
+    "linear-gradient(180deg,rgba(18,8,38,0.68) 0%,rgba(26,12,46,0.52) 40%,rgba(8,4,28,0.72) 100%)",
+
+  fog:
+    "linear-gradient(180deg,rgba(140,148,156,0.48) 0%,rgba(150,158,165,0.32) 50%,rgba(130,138,146,0.52) 100%)",
+
+  snow:
+    "linear-gradient(180deg,rgba(90,112,148,0.42) 0%,rgba(100,122,158,0.26) 50%,rgba(80,102,138,0.48) 100%)",
+
+  summer:
+    "linear-gradient(180deg,rgba(38,18,4,0.42) 0%,rgba(48,22,4,0.26) 50%,rgba(28,12,2,0.50) 100%)",
 };
 
-/* ── Forecast data ── */
-const getCondition = (weatherMain) => {
-  switch (weatherMain?.toLowerCase()) {
-    case "clear":
-      return "sunny";
+/* =========================================================
+   WEATHER KEY
+========================================================= */
 
-    case "clouds":
-      return "cloudy";
+function getWeatherKey(condition = "") {
+  const c = String(condition).toLowerCase();
 
-    case "rain":
-      return "rainy";
+  if (
+    c.includes("thunder") ||
+    c.includes("lightning")
+  ) {
+    return "thunderstorm";
+  }
 
-    case "drizzle":
-      return "drizzle";
+  if (
+    c.includes("snow") ||
+    c.includes("sleet") ||
+    c.includes("hail")
+  ) {
+    return "snow";
+  }
 
-    case "thunderstorm":
-      return "thunderstorm";
+  if (
+    c.includes("fog") ||
+    c.includes("mist") ||
+    c.includes("haze")
+  ) {
+    return "fog";
+  }
+
+  if (
+    c.includes("rain") ||
+    c.includes("drizzle") ||
+    c.includes("shower")
+  ) {
+    return "rain";
+  }
+
+  if (c.includes("partly")) {
+    return "partly-cloudy";
+  }
+
+  if (
+    c.includes("cloud") ||
+    c.includes("overcast")
+  ) {
+    return "cloudy";
+  }
+
+  if (
+    c.includes("hot") ||
+    c.includes("summer") ||
+    c.includes("heat")
+  ) {
+    return "summer";
+  }
+
+  return "sunny";
+}
+
+/* =========================================================
+   WEATHER ICON
+========================================================= */
+
+function getWeatherIcon(condition = "") {
+  const c = String(condition).toLowerCase();
+
+  if (
+    c.includes("thunder") ||
+    c.includes("lightning")
+  ) {
+    return Zap;
+  }
+
+  if (
+    c.includes("rain") ||
+    c.includes("shower")
+  ) {
+    return CloudRain;
+  }
+
+  if (c.includes("drizzle")) {
+    return CloudDrizzle;
+  }
+
+  if (
+    c.includes("cloud") ||
+    c.includes("overcast")
+  ) {
+    return Cloud;
+  }
+
+  if (c.includes("partly")) {
+    return CloudSun;
+  }
+
+  if (
+    c.includes("snow") ||
+    c.includes("sleet")
+  ) {
+    return Cloud;
+  }
+
+  if (
+    c.includes("fog") ||
+    c.includes("mist") ||
+    c.includes("haze")
+  ) {
+    return Cloud;
+  }
+
+  return Sun;
+}
+
+/* =========================================================
+   AQI
+========================================================= */
+
+const getAQIInfo = (aqi) => {
+  switch (Number(aqi)) {
+    case 1:
+      return {
+        label: "Good",
+        cls: "bg-green-100 text-green-700",
+      };
+
+    case 2:
+      return {
+        label: "Fair",
+        cls: "bg-lime-100 text-lime-700",
+      };
+
+    case 3:
+      return {
+        label: "Moderate",
+        cls: "bg-yellow-100 text-yellow-700",
+      };
+
+    case 4:
+      return {
+        label: "Poor",
+        cls: "bg-orange-100 text-orange-700",
+      };
+
+    case 5:
+      return {
+        label: "Very Poor",
+        cls: "bg-red-100 text-red-700",
+      };
 
     default:
-      return "partly-cloudy";
+      return {
+        label: "Unavailable",
+        cls: "bg-gray-100 text-gray-600",
+      };
   }
 };
-const forecastGradient = {
-  'sunny':        'from-amber-400 to-orange-500',
-  'partly-cloudy':'from-sky-400 to-blue-500',
-  'cloudy':       'from-slate-400 to-gray-500',
-  'rainy':        'from-blue-500 to-indigo-600',
-  'drizzle':      'from-teal-400 to-cyan-500',
-  'thunderstorm': 'from-purple-500 to-gray-700',
-};
 
-/* ─────────────────────────────────────────── */
-export  default function Weather() {
+/* =========================================================
+   ADVISORY
+========================================================= */
 
-  const [now, setNow]           = useState(new Date());     
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState('10:30 AM');
-  const [showForecast, setShowForecast] = useState(false);
-  const [weather, setWeather] = useState(null);
-  const [aqi, setAqi] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [searchCity, setSearchCity] = useState("");
-  const [forecast, setForecast] = useState([]);
+const getAdvisory = (weather, conditionKey) => {
+  const temp = Number(weather?.main?.temp || 0);
 
-  const condition = getCondition(weather?.weather?.[0]?.main);
-  const cfg = conditionCfg[condition] || conditionCfg["partly-cloudy"];
-  const adv = advisoryCfg[condition] || advisoryCfg["partly-cloudy"];
-  const Icon  = cfg.icon;
-  const AdvIcon = adv.icon;
-  const weatherDescription = weather?.weather?.[0]?.description || cfg.label;
+  const rain = Number(
+    weather?.rain?.["1h"] ||
+      weather?.rain?.["3h"] ||
+      0
+  );
 
- useEffect(() => {
-  const t = setInterval(() => setNow(new Date()), 30000);
+  const wind = Number(
+    weather?.wind?.speed || 0
+  );
 
-  return () => clearInterval(t);
-}, []);
-
-useEffect(() => {
-  updateCurrentLocationWeather();
-}, []);
-
-const updateCurrentLocationWeather = async (showRefresh = false) => {
-  if (showRefresh) {
-    setRefreshing(true);
-  } else {
-    setLoading(true);
+  if (conditionKey === "thunderstorm") {
+    return {
+      icon: ShieldAlert,
+      title: "Thunderstorm Warning",
+      text:
+        "Avoid open fields and tall trees. Keep livestock in covered shelter and disconnect electrical equipment until the storm passes.",
+      iconCls: "text-purple-700",
+      badge: "Critical",
+      badgeCls:
+        "text-purple-700 bg-purple-100",
+    };
   }
 
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      try {
-        await fetchWeather(
-          position.coords.latitude,
-          position.coords.longitude
-        );
+  if (
+    conditionKey === "rain" ||
+    rain >= 5
+  ) {
+    return {
+      icon: Umbrella,
+      title: "Rain Advisory",
+      text:
+        "Rain is expected. Check field drainage, avoid unnecessary pesticide spraying and protect harvested crops from moisture.",
+      iconCls: "text-blue-700",
+      badge: "Rain Alert",
+      badgeCls:
+        "text-blue-700 bg-blue-100",
+    };
+  }
 
-        await fetchForecast(
-          position.coords.latitude,
-          position.coords.longitude
-        );
+  if (
+    conditionKey === "snow"
+  ) {
+    return {
+      icon: Cloud,
+      title: "Cold Weather Advisory",
+      text:
+        "Cold conditions are expected. Protect sensitive crops and livestock from low temperatures and keep necessary shelter arrangements ready.",
+      iconCls: "text-sky-700",
+      badge: "Cold",
+      badgeCls:
+        "text-sky-700 bg-sky-100",
+    };
+  }
 
-        setLastUpdated(
-          new Date().toLocaleTimeString("en-IN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })
-        );
-      } catch (error) {
-        console.log(error);
-        alert("Unable to fetch weather data");
-      } finally {
-        setRefreshing(false);
-        setLoading(false);
-      }
-    },
-    (error) => {
-      console.log(error);
+  if (
+    conditionKey === "fog"
+  ) {
+    return {
+      icon: Cloud,
+      title: "Low Visibility Advisory",
+      text:
+        "Visibility may be reduced. Take extra care while travelling and avoid unnecessary outdoor work during dense fog.",
+      iconCls: "text-gray-700",
+      badge: "Low Visibility",
+      badgeCls:
+        "text-gray-700 bg-gray-100",
+    };
+  }
 
-      setRefreshing(false);
-      setLoading(false);
+  if (temp >= 35) {
+    return {
+      icon: Flame,
+      title: "Heat Advisory",
+      text:
+        "High temperature expected. Prefer early morning or evening field work and keep livestock in shade with sufficient water.",
+      iconCls: "text-orange-700",
+      badge: "Hot",
+      badgeCls:
+        "text-orange-700 bg-orange-100",
+    };
+  }
 
-      alert("Unable to get current location");
-    },
+  if (wind >= 10) {
+    return {
+      icon: Wind,
+      title: "Wind Advisory",
+      text:
+        "Strong winds are possible. Secure loose farm materials and avoid pesticide spraying during strong winds.",
+      iconCls: "text-sky-700",
+      badge: "Windy",
+      badgeCls:
+        "text-sky-700 bg-sky-100",
+    };
+  }
+
+  if (conditionKey === "sunny") {
+    return {
+      icon: Sun,
+      title: "Sunny Advisory",
+      text:
+        "Good visibility and dry conditions. Field work is generally suitable, but avoid prolonged work during peak afternoon heat.",
+      iconCls: "text-amber-700",
+      badge: "Favorable",
+      badgeCls:
+        "text-amber-700 bg-amber-100",
+    };
+  }
+
+  if (
+    conditionKey === "cloudy" ||
+    conditionKey === "partly-cloudy"
+  ) {
+    return {
+      icon: Cloud,
+      title: "Cloudy Advisory",
+      text:
+        "Cloudy conditions are expected. Keep an eye on sudden showers before irrigation, spraying or outdoor drying.",
+      iconCls: "text-slate-700",
+      badge: "Moderate",
+      badgeCls:
+        "text-slate-700 bg-slate-100",
+    };
+  }
+
+  return {
+    icon: Leaf,
+    title: "Today's Advisory",
+    text:
+      "Weather conditions look relatively comfortable. Plan field activities according to crop requirements and keep checking for weather changes.",
+    iconCls: "text-green-700",
+    badge: "Favorable",
+    badgeCls:
+      "text-green-700 bg-green-100",
+  };
+};
+
+/* =========================================================
+   TIME HELPERS
+========================================================= */
+
+const formatWeatherTime = (
+  timestamp,
+  timezoneOffset = 0
+) => {
+  if (!timestamp) return "--";
+
+  const localMs =
+    Number(timestamp) * 1000 +
+    Number(timezoneOffset) * 1000;
+
+  return new Date(localMs).toLocaleTimeString(
+    "en-IN",
     {
-      enableHighAccuracy: true,
-      timeout: 30000,
-      maximumAge: 0,
+      timeZone: "UTC",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     }
   );
 };
 
-const handleRefresh = () => {
-  updateCurrentLocationWeather(true);
+const getDateKey = (
+  timestamp,
+  timezoneOffset = 0
+) => {
+  const localMs =
+    Number(timestamp) * 1000 +
+    Number(timezoneOffset) * 1000;
+
+  return new Date(localMs)
+    .toISOString()
+    .slice(0, 10);
 };
 
-const handleCurrentLocation = () => {
-  updateCurrentLocationWeather();
+const formatForecastDate = (
+  timestamp,
+  timezoneOffset = 0,
+  options = {}
+) => {
+  if (!timestamp) return "--";
+
+  const localMs =
+    Number(timestamp) * 1000 +
+    Number(timezoneOffset) * 1000;
+
+  return new Date(localMs).toLocaleDateString(
+    "en-IN",
+    {
+      ...options,
+      timeZone: "UTC",
+    }
+  );
 };
 
-const fetchWeather = async (lat, lon) => {
-  try {
-    const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+/* =========================================================
+   METRIC CARD
+========================================================= */
 
-    const res = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-    );
-
-    setWeather(res.data);
-    setWeather(res.data);
-
-const aqiRes = await axios.get(
-  `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`
-);
-
-setAqi(aqiRes.data.list[0].main.aqi);
-  } catch (err) {
-    console.log(err);
-    alert("Unable to fetch weather data");
-  }
-};
-
-const fetchWeatherByCity = async () => {
-  if (!searchCity.trim()) return;
-
-  try {
-    setLoading(true);
-
-    const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
-
-    const res = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=${searchCity}&appid=${API_KEY}&units=metric`
-    );
-
-    setWeather(res.data);
-    setSearchCity("");
-    await fetchForecast(
-     res.data.coord.lat,
-     res.data.coord.lon
-);
-
-setLastUpdated(
-  new Date().toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  })
-);
-  } catch (err) {
-  if (err.response?.status === 404) {
-    alert("City not found");
-  } else {
-    alert("Unable to fetch weather. Please try again.");
-  }
-
-  console.log(err);
-}
-finally {
-  setLoading(false);
-}
-};
-
-const fetchForecast = async (lat, lon) => {
-  try {
-    const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
-
-    const res = await axios.get(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-    );
-
-    // Har din ka 12 PM wala forecast
-    const daily = res.data.list.filter((item) =>
-      item.dt_txt.includes("12:00:00")
-    );
-
-    setForecast(daily.slice(0, 5));
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-  const dateStr = now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
-  if (loading && !weather) {
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  iconBg,
+  iconColor,
+}) {
   return (
-    <div className="w-full h-80 flex items-center justify-center">
-      <p className="text-lg font-semibold text-gray-600">
-        Loading weather...
-      </p>
+    <div className="bg-white/90 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+      <div
+        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}
+      >
+        <Icon
+          className={`h-[18px] w-[18px] ${iconColor}`}
+        />
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-[11px] text-gray-500 font-medium leading-none mb-1">
+          {label}
+        </p>
+
+        <p className="text-sm font-bold text-gray-800 truncate">
+          {value}
+        </p>
+      </div>
     </div>
   );
 }
-  return (
-    <div className="w-full space-y-0">
 
+/* =========================================================
+   MAIN
+========================================================= */
 
-      {/* ══════ HERO CARD ══════ */}
-      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${cfg.gradient} text-white shadow-2xl ${cfg.glow}`}>
+export default function Weather() {
+  const [weather, setWeather] =
+    useState(null);
 
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -top-12 -right-12 w-52 h-52 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+  const [forecast, setForecast] =
+    useState([]);
 
-        {/* Rain streaks */}
-        {(condition === 'rainy' || condition === 'drizzle' || condition === 'thunderstorm') && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-15">
-            {[...Array(14)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-px bg-white rounded-full animate-rain"
-                style={{ left: `${(i * 7.3) % 100}%`, top: `-${(i * 6) % 25}%`, height: `${14 + (i % 5) * 7}px`, animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </div>
-        )}
+  const [aqi, setAqi] =
+    useState(null);
 
-        <div className="relative z-10 p-4">
+  const [profile, setProfile] =
+    useState(null);
 
-          {/* ── Top row: location + time ── */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3 w-3 text-white/70 shrink-0" />
-              <span className="text-white/90 text-xs font-semibold">{weather?.name}, {weather?.sys?.country}</span>
-            </div>
-            <div className="text-right">
-              <p className="text-white font-bold text-xs">{timeStr}</p>
-              <p className="text-white/55 text-xs">{dateStr}</p>
-            </div>
-          </div>
+  const [displayLocation, setDisplayLocation] =
+    useState("");
 
-          <div className="flex flex-col md:flex-row gap-2 mb-4">
-  <input
-    type="text"
-    placeholder="Search city..."
-    value={searchCity}
-    onChange={(e) => setSearchCity(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        fetchWeatherByCity();
+  const [displaySubLocation, setDisplaySubLocation] =
+    useState("");
+
+  const [locationType, setLocationType] =
+    useState("profile");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [isRefreshing, setIsRefreshing] =
+    useState(false);
+
+  const [showForecast, setShowForecast] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [lastUpdated, setLastUpdated] =
+    useState("");
+
+  const [now, setNow] =
+    useState(new Date());
+
+  /* =======================================================
+     CLOCK
+  ======================================================= */
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  /* =======================================================
+     PROFILE
+  ======================================================= */
+
+  const fetchProfile = async () => {
+    const token =
+      localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error(
+        "Please login again."
+      );
+    }
+
+    const response = await axios.get(
+      `${API_BASE_URL}/user/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    }}
-    className="flex-1 px-4 py-2 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 text-white placeholder:text-white/60 focus:outline-none"
-  />
+    );
 
-  <button
-    onClick={fetchWeatherByCity}
-    className="px-5 py-2 rounded-xl bg-white text-sky-700 font-semibold hover:bg-sky-100 transition"
-  >
-    Search
-  </button>
+    const user =
+      response.data?.data ||
+      response.data?.user ||
+      response.data;
 
-     <button
-         onClick={handleCurrentLocation}
-      disabled={loading}
-      className="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition disabled:opacity-60"
-  >
-  {loading ? "Loading..." : "📍 Current"}
-    </button>
+    setProfile(user);
+
+    return user;
+  };
+
+  /* =======================================================
+     PROFILE LOCATION NAME
+  ======================================================= */
+
+  const getProfileWeatherName = (
+    user
+  ) => {
+    return (
+      user?.village ||
+      user?.panchayat ||
+      user?.subDistrict ||
+      user?.district ||
+      user?.state ||
+      "Your Location"
+    );
+  };
+
+  const getProfileSubLocation = (
+    user
+  ) => {
+    const parts = [];
+
+    if (user?.district) {
+      parts.push(user.district);
+    }
+
+    if (
+      user?.state &&
+      user.state !== user.district
+    ) {
+      parts.push(user.state);
+    }
+
+    return parts.join(", ");
+  };
+
+  /* =======================================================
+     PROFILE GEOCODING
+  ======================================================= */
+
+  const geocodeProfileLocation = async (
+    user
+  ) => {
+    const queries = [];
+
+    const village = user?.village;
+    const panchayat = user?.panchayat;
+    const subDistrict =
+      user?.subDistrict;
+    const district = user?.district;
+    const state = user?.state;
+    const pincode = user?.pincode;
+
+    if (
+      village &&
+      district &&
+      state
+    ) {
+      queries.push(
+        `${village}, ${district}, ${state}, India`
+      );
+    }
+
+    if (
+      village &&
+      state
+    ) {
+      queries.push(
+        `${village}, ${state}, India`
+      );
+    }
+
+    if (pincode) {
+      queries.push(
+        `${pincode}, India`
+      );
+    }
+
+    if (
+      panchayat &&
+      district &&
+      state
+    ) {
+      queries.push(
+        `${panchayat}, ${district}, ${state}, India`
+      );
+    }
+
+    if (
+      subDistrict &&
+      district &&
+      state
+    ) {
+      queries.push(
+        `${subDistrict}, ${district}, ${state}, India`
+      );
+    }
+
+    if (
+      district &&
+      state
+    ) {
+      queries.push(
+        `${district}, ${state}, India`
+      );
+    }
+
+    for (const query of queries) {
+      try {
+        const response =
+          await axios.get(
+            `${OPENWEATHER_BASE_URL}/geo/1.0/direct`,
+            {
+              params: {
+                q: query,
+                limit: 5,
+                appid: API_KEY,
+              },
+            }
+          );
+
+        const results =
+          response.data || [];
+
+        if (
+          results.length > 0
+        ) {
+          const normalizedVillage =
+            String(
+              village || ""
+            ).toLowerCase();
+
+          const normalizedPanchayat =
+            String(
+              panchayat || ""
+            ).toLowerCase();
+
+          const exactVillage =
+            results.find(
+              (item) =>
+                String(
+                  item.name || ""
+                ).toLowerCase() ===
+                normalizedVillage
+            );
+
+          const exactPanchayat =
+            results.find(
+              (item) =>
+                String(
+                  item.name || ""
+                ).toLowerCase() ===
+                normalizedPanchayat
+            );
+
+          return (
+            exactVillage ||
+            exactPanchayat ||
+            results[0]
+          );
+        }
+      } catch (error) {
+        console.log(
+          "Profile geocoding failed:",
+          query,
+          error
+        );
+      }
+    }
+
+    throw new Error(
+      "Unable to find weather location."
+    );
+  };
+
+  /* =======================================================
+     SEARCH GEOCODING
+  ======================================================= */
+
+  const geocodeSearchLocation = async (
+    searchText
+  ) => {
+    const cleanSearch =
+      searchText.trim();
+
+    if (!cleanSearch) {
+      throw new Error(
+        "Please enter a location."
+      );
+    }
+
+    const queries = [
+      `${cleanSearch}, Garhwa, Jharkhand, India`,
+      `${cleanSearch}, Jharkhand, India`,
+      `${cleanSearch}, India`,
+    ];
+
+    for (const query of queries) {
+      try {
+        const response =
+          await axios.get(
+            `${OPENWEATHER_BASE_URL}/geo/1.0/direct`,
+            {
+              params: {
+                q: query,
+                limit: 5,
+                appid: API_KEY,
+              },
+            }
+          );
+
+        const results =
+          response.data || [];
+
+        if (!results.length) {
+          continue;
+        }
+
+        const normalized =
+          cleanSearch.toLowerCase();
+
+        const exactName =
+          results.find(
+            (item) =>
+              String(
+                item.name || ""
+              ).toLowerCase() ===
+              normalized
+          );
+
+        if (exactName) {
+          return {
+            ...exactName,
+            displayName: cleanSearch,
+            subLocation: [
+              exactName.state,
+              exactName.country !==
+                "India"
+                ? exactName.country
+                : null,
+            ]
+              .filter(Boolean)
+              .join(", "),
+          };
+        }
+
+        const localNameMatch =
+          results.find(
+            (item) => {
+              const names =
+                item.local_names ||
+                {};
+
+              return Object.values(
+                names
+              ).some(
+                (name) =>
+                  String(
+                    name
+                  ).toLowerCase() ===
+                  normalized
+              );
+            }
+          );
+
+        if (localNameMatch) {
+          return {
+            ...localNameMatch,
+            displayName: cleanSearch,
+            subLocation: [
+              localNameMatch.state,
+              localNameMatch.country !==
+                "India"
+                ? localNameMatch.country
+                : null,
+            ]
+              .filter(Boolean)
+              .join(", "),
+          };
+        }
+
+        return {
+          ...results[0],
+          displayName: cleanSearch,
+          subLocation: [
+            results[0].state,
+            results[0].country !==
+              "India"
+              ? results[0].country
+              : null,
+          ]
+            .filter(Boolean)
+            .join(", "),
+        };
+      } catch (error) {
+        console.log(
+          "Search geocoding failed:",
+          query,
+          error
+        );
+      }
+    }
+
+    throw new Error(
+      `"${cleanSearch}" location not found.`
+    );
+  };
+
+  /* =======================================================
+     WEATHER + AQI + FORECAST
+  ======================================================= */
+
+  const fetchWeatherData = async (
+    lat,
+    lon
+  ) => {
+    if (!API_KEY) {
+      throw new Error(
+        "Weather API key is missing."
+      );
+    }
+
+    /* CURRENT WEATHER */
+
+    const weatherResponse =
+      await axios.get(
+        `${OPENWEATHER_BASE_URL}/data/2.5/weather`,
+        {
+          params: {
+            lat,
+            lon,
+            appid: API_KEY,
+            units: "metric",
+          },
+        }
+      );
+
+    setWeather(
+      weatherResponse.data
+    );
+
+    /* AQI */
+
+    try {
+      const aqiResponse =
+        await axios.get(
+          `${OPENWEATHER_BASE_URL}/data/2.5/air_pollution`,
+          {
+            params: {
+              lat,
+              lon,
+              appid: API_KEY,
+            },
+          }
+        );
+
+      setAqi(
+        aqiResponse.data?.list?.[0]
+          ?.main?.aqi ?? null
+      );
+    } catch (error) {
+      console.log(
+        "AQI unavailable:",
+        error
+      );
+
+      setAqi(null);
+    }
+
+    /* FORECAST */
+
+    try {
+      const forecastResponse =
+        await axios.get(
+          `${OPENWEATHER_BASE_URL}/data/2.5/forecast`,
+          {
+            params: {
+              lat,
+              lon,
+              appid: API_KEY,
+              units: "metric",
+            },
+          }
+        );
+
+      const list =
+        forecastResponse.data?.list ||
+        [];
+
+      const timezoneOffset =
+        forecastResponse.data?.city
+          ?.timezone || 0;
+
+      const grouped = {};
+
+      list.forEach((item) => {
+        const key = getDateKey(
+          item.dt,
+          timezoneOffset
+        );
+
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+
+        grouped[key].push(item);
+      });
+
+      const daily = Object.entries(
+        grouped
+      )
+        .slice(0, 5)
+        .map(
+          ([date, items]) => {
+            const temps =
+              items
+                .map((item) =>
+                  Number(
+                    item.main?.temp ??
+                      0
+                  )
+                )
+                .filter(
+                  (value) =>
+                    !Number.isNaN(
+                      value
+                    )
+                );
+
+            const rainProbabilities =
+              items.map((item) =>
+                Number(
+                  item.pop || 0
+                )
+              );
+
+            const midday =
+              items.find(
+                (item) =>
+                  item.dt_txt?.includes(
+                    "12:00:00"
+                  )
+              ) ||
+              items[
+                Math.floor(
+                  items.length / 2
+                )
+              ];
+
+            return {
+              date,
+              dt:
+                midday?.dt ||
+                items[0]?.dt,
+
+              temp_max:
+                temps.length
+                  ? Math.max(...temps)
+                  : 0,
+
+              temp_min:
+                temps.length
+                  ? Math.min(...temps)
+                  : 0,
+
+              pop:
+                rainProbabilities.length
+                  ? Math.max(
+                      ...rainProbabilities
+                    )
+                  : 0,
+
+              weather:
+                midday?.weather?.[0] ||
+                items[0]?.weather?.[0],
+
+              humidity: Math.round(
+                items.reduce(
+                  (sum, item) =>
+                    sum +
+                    Number(
+                      item.main
+                        ?.humidity ||
+                        0
+                    ),
+                  0
+                ) / items.length
+              ),
+            };
+          }
+        );
+
+      setForecast(daily);
+    } catch (error) {
+      console.log(
+        "Forecast unavailable:",
+        error
+      );
+
+      setForecast([]);
+    }
+
+    setLastUpdated(
+      new Date().toLocaleTimeString(
+        "en-IN",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }
+      )
+    );
+  };
+
+  /* =======================================================
+     LOAD PROFILE WEATHER
+  ======================================================= */
+
+  const loadProfileWeather = async (
+    showRefresh = false
+  ) => {
+    try {
+      setErrorMessage("");
+
+      if (showRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const user =
+        profile ||
+        (await fetchProfile());
+
+      const location =
+        await geocodeProfileLocation(
+          user
+        );
+
+      await fetchWeatherData(
+        location.lat,
+        location.lon
+      );
+
+      setDisplayLocation(
+        getProfileWeatherName(user)
+      );
+
+      setDisplaySubLocation(
+        getProfileSubLocation(user)
+      );
+
+      setLocationType("profile");
+    } catch (error) {
+      console.error(
+        "Profile weather error:",
+        error
+      );
+
+      setErrorMessage(
+        error.response?.data
+          ?.message ||
+          error.message ||
+          "Unable to load weather."
+      );
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
+
+  useEffect(() => {
+    loadProfileWeather();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* =======================================================
+     SEARCH WEATHER
+  ======================================================= */
+
+  const fetchWeatherByCity =
+    async () => {
+      if (!search.trim()) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const searchedName =
+          search.trim();
+
+        const location =
+          await geocodeSearchLocation(
+            searchedName
+          );
+
+        await fetchWeatherData(
+          location.lat,
+          location.lon
+        );
+
+        setDisplayLocation(
+          location.displayName ||
+            searchedName
+        );
+
+        setDisplaySubLocation(
+          location.subLocation || ""
+        );
+
+        setLocationType("search");
+
+        setSearch("");
+      } catch (error) {
+        console.error(
+          "Search weather error:",
+          error
+        );
+
+        setErrorMessage(
+          error.message ||
+            "Unable to find this location."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  /* =======================================================
+     REFRESH
+  ======================================================= */
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      setErrorMessage("");
+
+      if (
+        locationType === "profile"
+      ) {
+        const user =
+          profile ||
+          (await fetchProfile());
+
+        const location =
+          await geocodeProfileLocation(
+            user
+          );
+
+        await fetchWeatherData(
+          location.lat,
+          location.lon
+        );
+
+        setDisplayLocation(
+          getProfileWeatherName(user)
+        );
+
+        setDisplaySubLocation(
+          getProfileSubLocation(user)
+        );
+      } else if (
+        weather?.coord
+      ) {
+        await fetchWeatherData(
+          weather.coord.lat,
+          weather.coord.lon
+        );
+      } else {
+        await loadProfileWeather();
+      }
+    } catch (error) {
+      console.error(
+        "Refresh weather error:",
+        error
+      );
+
+      setErrorMessage(
+        error.message ||
+          "Unable to refresh weather."
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  /* =======================================================
+     MY VILLAGE
+  ======================================================= */
+
+  const handleMyVillage = () => {
+    loadProfileWeather(true);
+  };
+
+  /* =======================================================
+     DISPLAY DATA
+  ======================================================= */
+
+  const conditionText =
+    weather?.weather?.[0]
+      ?.description || "";
+
+  const wKey =
+    getWeatherKey(conditionText);
+
+  const WeatherIcon =
+    getWeatherIcon(conditionText);
+
+  const weatherDescription =
+    conditionText
+      ? conditionText.replace(
+          /\b\w/g,
+          (letter) =>
+            letter.toUpperCase()
+        )
+      : "Weather";
+
+  const advisory =
+    getAdvisory(
+      weather,
+      wKey
+    );
+
+  const AdvIcon =
+    advisory.icon;
+
+  const aqiInfo =
+    getAQIInfo(aqi);
+
+  /* =======================================================
+     WEATHER TIME
+  ======================================================= */
+
+  const weatherTimezone =
+    weather?.timezone || 0;
+
+  const getCurrentWeatherTime =
+    () => {
+      const localMs =
+        Date.now() +
+        Number(
+          weatherTimezone
+        ) *
+          1000;
+
+      return new Date(
+        localMs
+      ).toLocaleTimeString(
+        "en-IN",
+        {
+          timeZone: "UTC",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }
+      );
+    };
+
+  const getCurrentWeatherDate =
+    () => {
+      const localMs =
+        Date.now() +
+        Number(
+          weatherTimezone
+        ) *
+          1000;
+
+      return new Date(
+        localMs
+      ).toLocaleDateString(
+        "en-IN",
+        {
+          timeZone: "UTC",
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      );
+    };
+
+  const timeStr =
+    weather
+      ? getCurrentWeatherTime()
+      : now.toLocaleTimeString(
+          "en-IN",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }
+        );
+
+  const dateStr =
+    weather
+      ? getCurrentWeatherDate()
+      : now.toLocaleDateString(
+          "en-IN",
+          {
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }
+        );
+
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
+  if (
+    loading &&
+    !weather
+  ) {
+    return (
+      <div className="w-full min-h-[420px] flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-50 flex items-center justify-center">
+            <RefreshCw className="h-7 w-7 text-green-600 animate-spin" />
+          </div>
+
+          <h3 className="text-xl font-bold text-gray-800">
+            Loading Weather
+          </h3>
+
+          <p className="text-sm text-gray-500 mt-2">
+            Finding weather for your location...
+          </p>
+        </div>
       </div>
-          {/* ── Main body: icon + temp + metrics ── */}
-          <div className="flex items-center gap-5">
+    );
+  }
 
-            {/* Icon */}
-            <div className={`shrink-0 p-3 rounded-2xl bg-white/15 backdrop-blur-sm shadow-lg ${cfg.animClass}`}>
-              <Icon className="h-14 w-14 text-white drop-shadow-lg" />
+  /* =======================================================
+     ERROR
+  ======================================================= */
+
+  if (
+    errorMessage &&
+    !weather
+  ) {
+    return (
+      <div className="w-full px-4">
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl border border-red-100 p-6 text-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+            <CloudRain className="h-7 w-7 text-red-500" />
+          </div>
+
+          <h3 className="text-xl font-bold text-gray-800">
+            Weather Unavailable
+          </h3>
+
+          <p className="text-gray-500 text-sm mt-2">
+            {errorMessage}
+          </p>
+
+          <button
+            onClick={
+              handleMyVillage
+            }
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* =======================================================
+     MAIN UI
+  ======================================================= */
+
+  return (
+    <div className="w-full">
+      <style>{`
+        @keyframes rainDrop {
+          0% {
+            transform: translateY(-30px) skewX(-10deg);
+            opacity: 0;
+          }
+
+          10% {
+            opacity: 1;
+          }
+
+          90% {
+            opacity: 1;
+          }
+
+          100% {
+            transform: translateY(320px) skewX(-10deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
+      <div
+        className="rounded-3xl overflow-hidden shadow-2xl"
+        style={{
+          background:
+            "linear-gradient(155deg, #0b2418 0%, #0f3322 40%, #1a5235 80%, #1e6040 100%)",
+        }}
+      >
+        {/* =================================================
+            HEADER
+        ================================================= */}
+
+        <div className="px-6 pt-5 pb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {/* LOCATION */}
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center">
+              <MapPin
+                className="text-white"
+                style={{
+                  width: 18,
+                  height: 18,
+                }}
+              />
             </div>
 
-            {/* Temp + label */}
-            <div className="flex-1">
-             <p className="text-6xl font-black leading-none tracking-tight">
-               {Math.round(weather?.main?.temp || 0)}
-                <span className="text-2xl align-super font-bold">°C</span>
+            <div>
+              <p className="text-white/55 text-[10px] font-bold uppercase tracking-widest leading-none">
+                Weather for
+              </p>
+
+              <p className="text-white text-[18px] font-bold leading-snug">
+                {displayLocation ||
+                  weather?.name ||
+                  "Your Location"}
+              </p>
+
+              {displaySubLocation && (
+                <p className="text-white/50 text-[11px] leading-none">
+                  {displaySubLocation}
                 </p>
-              <p className="text-white/80 font-semibold text-sm mt-1">{weatherDescription}</p>
-              <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
-                <span className="flex items-center gap-0.5 text-xs text-white/70">
-                  <ArrowUp className="h-3 w-3 text-red-300" />
-                   {Math.round(weather?.main?.temp_max || 0)}°
-                    </span>
-                <span className="flex items-center gap-0.5 text-xs text-white/70">
-                  <ArrowDown className="h-3 w-3 text-blue-200" />{Math.round(weather?.main?.temp_min || 0)}°
+              )}
+            </div>
+          </div>
+
+          {/* SEARCH */}
+
+          <div className="flex-1 flex gap-2 w-full sm:w-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+              <input
+                type="text"
+                value={search}
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter"
+                  ) {
+                    fetchWeatherByCity();
+                  }
+                }}
+                placeholder="Search another city or village..."
+                className="w-full pl-9 pr-4 py-2.5 bg-white/95 border border-white/30 rounded-xl text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-green-400 transition-all"
+              />
+            </div>
+
+            <button
+              onClick={
+                fetchWeatherByCity
+              }
+              disabled={
+                !search.trim() ||
+                loading
+              }
+              className="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-xl transition-colors whitespace-nowrap shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Search
+            </button>
+
+            {locationType ===
+              "search" && (
+              <button
+                onClick={
+                  handleMyVillage
+                }
+                disabled={loading}
+                className="px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors whitespace-nowrap shadow-md disabled:opacity-50 flex items-center gap-2"
+              >
+                <LocateFixed className="h-4 w-4" />
+                <span className="hidden lg:inline">
+                  My Village
                 </span>
-                <span className="text-white/40 text-xs">|</span>
-                <span className="flex items-center gap-1 text-xs text-white/70">
-                  <Thermometer className="h-3 w-3" />{Math.round(weather?.main?.feels_like || 0)}°
+              </button>
+            )}
+          </div>
+
+          {/* TIME */}
+
+          <div className="text-right shrink-0 hidden sm:flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-white/50" />
+
+            <div>
+              <p className="text-white text-2xl font-bold leading-none">
+                {timeStr}
+              </p>
+
+              <p className="text-white/55 text-xs mt-0.5">
+                {dateStr}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* =================================================
+            MAIN GRID
+        ================================================= */}
+
+        <div className="px-4 pb-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* CURRENT WEATHER */}
+
+          <div
+            className="relative rounded-2xl overflow-hidden min-h-52"
+            style={{
+              backgroundImage: `url("${BG_MAP[wKey]}")`,
+              backgroundSize: "cover",
+              backgroundPosition:
+                "center",
+            }}
+          >
+            {/* OVERLAY */}
+
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  OVERLAY_MAP[wKey],
+              }}
+            />
+
+            {/* RAIN EFFECT */}
+
+            {(wKey === "rain" ||
+              wKey ===
+                "thunderstorm") && (
+              <div
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{
+                  opacity: 0.22,
+                }}
+              >
+                {[...Array(18)].map(
+                  (_, i) => (
+                    <div
+                      key={i}
+                      className="absolute bg-white rounded-full"
+                      style={{
+                        width: "1px",
+                        height: `${
+                          16 +
+                          (i % 4) *
+                            8
+                        }px`,
+                        left: `${
+                          (i * 5.7) %
+                          100
+                        }%`,
+                        top: 0,
+                        animation: `rainDrop ${
+                          0.8 +
+                          (i % 3) *
+                            0.2
+                        }s linear ${
+                          i * 0.1
+                        }s infinite`,
+                      }}
+                    />
+                  )
+                )}
+              </div>
+            )}
+
+            <div
+              className="relative p-5"
+              style={{
+                textShadow:
+                  "0 1px 6px rgba(0,0,0,0.8)",
+              }}
+            >
+              <p className="text-white font-bold text-base">
+                Current Weather
+              </p>
+
+              <p className="text-white/65 text-xs mt-0.5">
+                Live weather conditions at your location
+              </p>
+
+              <div className="flex items-center gap-4 mt-4">
+                {/* WEATHER ICON */}
+
+                <div className="shrink-0 drop-shadow-lg w-[72px] h-[72px] flex items-center justify-center">
+                  <WeatherIcon
+                    className="text-white"
+                    style={{
+                      width: 68,
+                      height: 68,
+                    }}
+                    strokeWidth={1.5}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-white text-5xl font-bold leading-none">
+                    {Math.round(
+                      Number(
+                        weather?.main
+                          ?.temp || 0
+                      )
+                    )}
+                    °C
+                  </p>
+
+                  <p className="text-white text-lg font-semibold mt-1">
+                    {weatherDescription}
+                  </p>
+
+                  <p className="text-white/70 text-sm">
+                    Feels like{" "}
+                    {Math.round(
+                      Number(
+                        weather?.main
+                          ?.feels_like ||
+                          0
+                      )
+                    )}
+                    °C
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 mt-3 text-sm font-semibold text-white/85">
+                <span className="flex items-center gap-1.5">
+                  <ArrowUp className="h-3.5 w-3.5 text-red-300" />
+
+                  <span>
+                    {Math.round(
+                      Number(
+                        weather?.main
+                          ?.temp_max ||
+                          0
+                      )
+                    )}
+                    °
+                  </span>
+
+                  <span className="text-white/40 font-normal text-xs">
+                    Max
+                  </span>
+                </span>
+
+                <span className="text-white/25">
+                  |
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <ArrowDown className="h-3.5 w-3.5 text-blue-300" />
+
+                  <span>
+                    {Math.round(
+                      Number(
+                        weather?.main
+                          ?.temp_min ||
+                          0
+                      )
+                    )}
+                    °
+                  </span>
+
+                  <span className="text-white/40 font-normal text-xs">
+                    Min
+                  </span>
                 </span>
               </div>
             </div>
+          </div>
 
-            {/* Right mini-stats 2×2 grid (desktop) */}
-            <div className="hidden md:grid grid-cols-2 gap-1.5 shrink-0">
-              {[
-  {
-    icon: Droplets,
-    label: "Humidity",
-    val: `${weather?.main?.humidity ?? 0}%`,
-  },
-  {
-    icon: CloudRain,
-    label: "Cloud",
-    val: `${weather?.clouds?.all ?? 0}%`,
-  },
-        {
-          icon: Wind,
-         label: "Wind",
-         val: `${((weather?.wind?.speed ?? 0) * 3.6).toFixed(1)} km/h`,
-        },
-       {
-         icon: Navigation,
-        label: "Direction",
-        val: `${weather?.wind?.deg ?? 0}°`,
-         },
-         ].map(m => {
-                const MIcon = m.icon;
-                return (
-                  <div key={m.label} className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
-                    <MIcon className="h-3 w-3 text-white/60 shrink-0" />
-                    <div>
-                      <p className="text-white/50 text-[10px] leading-none">{m.label}</p>
-                      <p className="text-white font-bold text-xs leading-tight mt-0.5">{m.val}</p>
-                    </div>
+          {/* TODAY'S DETAILS */}
+
+          <div
+            className="rounded-2xl p-4"
+            style={{
+              background:
+                "rgba(255,255,255,0.10)",
+              backdropFilter:
+                "blur(10px)",
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-white font-bold text-base">
+                  Today's Details
+                </p>
+
+                <p className="text-white/55 text-xs mt-0.5">
+                  More information about current weather
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-md">
+                <Leaf className="h-3.5 w-3.5" />
+
+                <div className="leading-tight">
+                  <div>
+                    Air Quality
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* ── Mobile metrics row ── */}
-          <div className="grid grid-cols-4 gap-1.5 mt-3 md:hidden">
-        {[
-  {
-       icon: Droplets,
-       val: `${weather?.main?.humidity ?? 0}%`,
-       },
-     {
-       icon: CloudRain,
-       val: `${weather?.clouds?.all ?? 0}%`,
-       },
-       {
-         icon: Wind,
-        val: `${weather?.wind?.speed ?? 0} km/h`,
-      },
-       {
-        icon: Navigation,
-         val: `${weather?.wind?.deg ?? 0}°`,
-         },
-        ].map((m, i) => {
-              const MIcon = m.icon;
-              return (
-                <div key={i} className="flex flex-col items-center gap-1 bg-white/15 backdrop-blur-sm rounded-xl py-2">
-                  <MIcon className="h-4 w-4 text-white/70" />
-                  <span className="text-white font-bold text-xs">{m.val}</span>
+                  <div className="font-normal">
+                    {aqiInfo.label}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* ── Metrics strip: sunrise / sunset / visibility / AQI ── */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/20 flex-wrap">
-           {[
-  {
-    icon: Sun,
-    label: "Sunrise",
-    val: weather
-      ? new Date(weather.sys.sunrise * 1000).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "--",
-  },
-  {
-    icon: Sunset,
-    label: "Sunset",
-    val: weather
-      ? new Date(weather.sys.sunset * 1000).toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "--",
-  },
-      {
-        icon: Eye,
-        label: "Visibility",
-        val: weather
-         ? `${(weather.visibility / 1000).toFixed(1)} km`
-         : "--",
-       },
-       {
-           icon: Activity,
-          label: "AQI",
-          val: aqi ?? "--",
-           }
-       ].map(m => {
-              const MIcon = m.icon;
-              return (
-                <div key={m.label} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2.5 py-1">
-                  <MIcon className="h-3 w-3 text-white/60 shrink-0" />
-                  <span className="text-white/55 text-xs">{m.label}:</span>
-                  <span className="text-white text-xs font-bold">{m.val}</span>
-                </div>
-              );
-            })}
-            <div className="ml-auto flex items-center gap-1 text-white/45 text-xs">
-              <RefreshCw className="h-2.5 w-2.5" />
-              Updated {lastUpdated}
+              </div>
             </div>
-          </div>
 
-          {/* ── Advisory box ── */}
-          <div className={`mt-2.5 rounded-xl border ${adv.border} ${adv.bg} px-2.5 py-1.5 flex items-center gap-2`}>
-            <div className="p-1 rounded-lg bg-white/80 shadow-sm shrink-0">
-              <AdvIcon className={`h-3 w-3 ${adv.iconCls}`} />
+            <div className="grid grid-cols-3 gap-2">
+              <MetricCard
+                icon={Droplets}
+                label="Humidity"
+                value={`${weather?.main?.humidity ?? 0}%`}
+                iconBg="bg-blue-100"
+                iconColor="text-blue-500"
+              />
+
+              <MetricCard
+                icon={Cloud}
+                label="Cloud Cover"
+                value={`${weather?.clouds?.all ?? 0}%`}
+                iconBg="bg-slate-100"
+                iconColor="text-slate-500"
+              />
+
+              <MetricCard
+                icon={Wind}
+                label="Wind"
+                value={`${(
+                  Number(
+                    weather?.wind
+                      ?.speed || 0
+                  ) * 3.6
+                ).toFixed(1)} km/h`}
+                iconBg="bg-cyan-100"
+                iconColor="text-cyan-600"
+              />
+
+              <MetricCard
+                icon={Navigation}
+                label="Direction"
+                value={`${weather?.wind?.deg ?? 0}°`}
+                iconBg="bg-yellow-100"
+                iconColor="text-yellow-600"
+              />
+
+              <MetricCard
+                icon={Gauge}
+                label="Pressure"
+                value={`${weather?.main?.pressure ?? "--"} hPa`}
+                iconBg="bg-purple-100"
+                iconColor="text-purple-600"
+              />
+
+              <MetricCard
+                icon={Eye}
+                label="Visibility"
+                value={
+                  weather?.visibility
+                    ? `${(
+                        Number(
+                          weather.visibility
+                        ) / 1000
+                      ).toFixed(
+                        1
+                      )} km`
+                    : "--"
+                }
+                iconBg="bg-pink-100"
+                iconColor="text-pink-600"
+              />
             </div>
-            <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-              <p className="text-gray-800 font-bold text-xs whitespace-nowrap">{adv.title}</p>
-              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${adv.badgeCls}`}>{adv.badge}</span>
-              <p className="text-gray-600 text-xs truncate">{adv.text}</p>
-            </div>
-          </div>
-
-          {/* ── Buttons ── */}
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-white/20 to-white/30 hover:from-white/30 hover:to-white/40 backdrop-blur-sm border border-white/25 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-60 flex-1 justify-center"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Refreshing…' : 'Refresh'}
-            </button>
-
-            <button
-              onClick={() => setShowForecast(p => !p)}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-white to-white/90 hover:from-white/95 hover:to-white/80 text-gray-800 text-xs font-bold px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg flex-1 justify-center"
-            >
-              {showForecast ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              {showForecast ? 'Hide Forecast' : 'Full Forecast'}
-            </button>
           </div>
         </div>
 
-        {/* ══════ 5-DAY FORECAST (expandable) ══════ */}
+        {/* =================================================
+            BOTTOM INFO BAR
+        ================================================= */}
+
         <div
-          className={`overflow-hidden transition-all duration-500 ease-in-out ${
-            showForecast ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
-          }`}
+          className="mx-4 mt-3 grid grid-cols-2 md:grid-cols-4 rounded-2xl overflow-hidden"
+          style={{
+            background:
+              "rgba(0,0,0,0.32)",
+          }}
         >
-          <div className="px-4 pb-4">
-            <div className="h-px bg-white/20 mb-3" />
-            <div className="grid grid-cols-5 gap-1.5">
-              {forecast.map((day, i) => {
-                const condition = getCondition(day.weather[0].main);
-                 const FIcon = conditionCfg[condition].icon;
-                const isToday = i === 0;
-                return (
-                  <div
-                    key={i}
-                    className={`flex flex-col items-center gap-1 py-2.5 px-1.5 rounded-xl transition-all ${
-                      isToday
-                        ? 'bg-white/25 ring-1 ring-white/50 shadow-lg'
-                        : 'bg-white/10 hover:bg-white/20'
-                    }`}
-                  >
-                    <p className={`text-xs font-bold ${isToday ? 'text-white' : 'text-white/70'}`}>{i === 0
-                         ? "Today"
-                         : new Date(day.dt_txt).toLocaleDateString("en-IN", {
-                         weekday: "short",
-                            })}</p>
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${forecastGradient[condition]} flex items-center justify-center shadow-sm`}>
-                      <FIcon className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <ArrowUp className="h-2 w-2 text-red-300" />
-                      <span className="text-xs font-bold text-white">{Math.round(day.main.temp_max)}°</span>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <ArrowDown className="h-2 w-2 text-blue-200" />
-                      <span className="text-xs text-white/60">{Math.round(day.main.temp_min)}°</span>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <Droplets className="h-2 w-2 text-blue-200" />
-                      <span className="text-xs text-white/80 font-semibold">{day.pop ? Math.round(day.pop * 100) : 0}%</span>
-                    </div>
-                  </div>
-                );
-              })}
+          {[
+            {
+              icon: Sunrise,
+              label: "Sunrise",
+              value:
+                formatWeatherTime(
+                  weather?.sys
+                    ?.sunrise,
+                  weatherTimezone
+                ),
+              color:
+                "text-yellow-400",
+            },
+
+            {
+              icon: Sunset,
+              label: "Sunset",
+              value:
+                formatWeatherTime(
+                  weather?.sys
+                    ?.sunset,
+                  weatherTimezone
+                ),
+              color:
+                "text-orange-400",
+            },
+
+            {
+              icon: Leaf,
+              label: "Air Quality",
+              value:
+                aqiInfo.label,
+              color:
+                "text-green-400",
+            },
+
+            {
+              icon: Clock,
+              label: "Last Updated",
+              value:
+                lastUpdated ||
+                "--",
+              color:
+                "text-blue-300",
+            },
+          ].map(
+            (
+              {
+                icon: Icon,
+                label,
+                value,
+                color,
+              },
+              i
+            ) => (
+              <div
+                key={label}
+                className={`flex items-center gap-3 px-5 py-3.5 ${
+                  i < 3
+                    ? "border-r border-white/10"
+                    : ""
+                }`}
+              >
+                <Icon
+                  className={`h-6 w-6 shrink-0 ${color}`}
+                />
+
+                <div>
+                  <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wide">
+                    {label}
+                  </p>
+
+                  <p className="text-white text-sm font-bold">
+                    {value}
+                  </p>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
+        {/* =================================================
+            ALERT
+        ================================================= */}
+
+        <div className="mx-4 mt-3 bg-white rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+            <AdvIcon
+              className={`h-5 w-5 ${advisory.iconCls}`}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <p className="font-bold text-gray-900 text-sm">
+                {advisory.title}
+              </p>
+
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${advisory.badgeCls}`}
+              >
+                {advisory.badge}
+              </span>
             </div>
+
+            <p className="text-gray-500 text-xs leading-relaxed">
+              {advisory.text}
+            </p>
           </div>
         </div>
-      </div>
 
+        {/* ERROR AFTER WEATHER */}
+
+        {errorMessage &&
+          weather && (
+            <div className="mx-4 mt-3 rounded-xl bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-xs">
+              {errorMessage}
+            </div>
+          )}
+
+        {/* =================================================
+            ACTION BUTTONS
+        ================================================= */}
+
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={
+              handleRefresh
+            }
+            disabled={
+              isRefreshing
+            }
+            className="flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-2xl text-sm transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${
+                isRefreshing
+                  ? "animate-spin"
+                  : ""
+              }`}
+            />
+
+            {isRefreshing
+              ? "Refreshing..."
+              : "Refresh Weather"}
+          </button>
+
+          <button
+            onClick={() =>
+              setShowForecast(
+                !showForecast
+              )
+            }
+            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold py-3.5 rounded-2xl text-sm transition-colors"
+          >
+            <CalendarDays className="h-4 w-4" />
+
+            {showForecast
+              ? "Hide 5-Day Forecast"
+              : "View 5-Day Forecast"}
+
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${
+                showForecast
+                  ? "rotate-180"
+                  : ""
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* =================================================
+            5-DAY FORECAST
+        ================================================= */}
+
+        {showForecast && (
+          <div className="mx-4 mb-4 bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden">
+            <div className="px-5 py-3 border-b border-white/10">
+              <p className="text-white font-bold text-sm">
+                5-Day Forecast
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5">
+              {forecast.map(
+                (day, i) => {
+                  const dayDescription =
+                    day.weather
+                      ?.description ||
+                    "Weather";
+
+                  const dayKey =
+                    getWeatherKey(
+                      dayDescription
+                    );
+
+                  const DayIcon =
+                    getWeatherIcon(
+                      dayDescription
+                    );
+
+                  const dayName =
+                    i === 0
+                      ? "Today"
+                      : formatForecastDate(
+                          day.dt,
+                          weatherTimezone,
+                          {
+                            weekday:
+                              "short",
+                          }
+                        );
+
+                  const dateText =
+                    formatForecastDate(
+                      day.dt,
+                      weatherTimezone,
+                      {
+                        day: "numeric",
+                        month: "short",
+                      }
+                    );
+
+                  return (
+                    <div
+                      key={day.date}
+                      className={`flex flex-col items-center py-4 px-2 gap-1.5 ${
+                        i <
+                        Math.min(
+                          forecast.length,
+                          5
+                        ) -
+                          1
+                          ? "border-r border-white/10"
+                          : ""
+                      }`}
+                    >
+                      <p className="text-white/60 text-xs font-bold">
+                        {dayName}
+                      </p>
+
+                      <p className="text-white/40 text-[10px]">
+                        {dateText}
+                      </p>
+
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md ${
+                          dayKey ===
+                          "thunderstorm"
+                            ? "bg-purple-600"
+                            : dayKey ===
+                              "rain"
+                            ? "bg-blue-600"
+                            : dayKey ===
+                              "cloudy"
+                            ? "bg-slate-500"
+                            : dayKey ===
+                              "fog"
+                            ? "bg-gray-500"
+                            : dayKey ===
+                              "snow"
+                            ? "bg-sky-500"
+                            : "bg-green-600"
+                        }`}
+                      >
+                        <DayIcon
+                          className="h-5 w-5 text-white"
+                        />
+                      </div>
+
+                      <p className="text-white text-xs text-center capitalize truncate max-w-full">
+                        {dayDescription}
+                      </p>
+
+                      <div className="flex gap-1 text-xs font-semibold">
+                        <span className="text-red-300">
+                          {Math.round(
+                            Number(
+                              day.temp_max ||
+                                0
+                            )
+                          )}
+                          °
+                        </span>
+
+                        <span className="text-white/30">
+                          /
+                        </span>
+
+                        <span className="text-blue-300">
+                          {Math.round(
+                            Number(
+                              day.temp_min ||
+                                0
+                            )
+                          )}
+                          °
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Droplets className="h-3 w-3 text-blue-200" />
+
+                        <span className="text-white/70 text-[10px] font-semibold">
+                          {Math.round(
+                            Number(
+                              day.pop ||
+                                0
+                            ) * 100
+                          )}
+                          % rain
+                        </span>
+                      </div>
+
+                      <p className="text-white/45 text-[10px]">
+                        Humidity{" "}
+                        {day.humidity ??
+                          0}
+                        %
+                      </p>
+                    </div>
+                  );
+                }
+              )}
+
+              {forecast.length ===
+                0 && (
+                <div className="col-span-full py-6 text-center">
+                  <p className="text-white/60 text-sm">
+                    Forecast data is currently unavailable.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
