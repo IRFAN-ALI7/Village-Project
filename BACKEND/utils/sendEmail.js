@@ -1,22 +1,25 @@
-const { Resend } = require("resend");
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: `"Digital Village Project, Jharkhand" <onboarding@resend.dev>`,
-      to,
-      subject,
-      html,
+    const response = await fetch(process.env.APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to,
+        subject,
+        html,
+      }),
     });
 
-    if (error) {
-      console.error("Email sending failed:", error);
-      throw error;
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      console.error("Email sending failed:", data);
+      throw new Error(data.message || "Email sending failed");
     }
 
-    console.log("Email sent:", data.id);
+    console.log("Email sent successfully");
 
     return data;
   } catch (error) {
