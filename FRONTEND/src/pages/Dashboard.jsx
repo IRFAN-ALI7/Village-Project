@@ -223,14 +223,14 @@ export default function Dashboard() {
               QUICK STATS
           ================================================== */}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-3 gap-3 mb-8">
             {quickStats.map((stat) => {
               const Icon = stat.icon;
 
               return (
                 <div
                   key={stat.label}
-                  className="bg-white/70 backdrop-blur-md rounded-xl p-6 shadow-lg border border-white/50 hover:shadow-xl transition-all"
+                  className="bg-white/70 backdrop-blur-md rounded-xl p-3 md:p-6 shadow-lg border border-white/50 hover:shadow-xl transition-all"
                 >
                   <div className="flex items-center justify-between">
 
@@ -248,9 +248,9 @@ export default function Dashboard() {
                       </p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-500 to-blue-500 p-4 rounded-xl">
-                      <Icon className="h-8 w-8 text-white" />
-                    </div>
+                    <div className="bg-gradient-to-br from-green-500 to-blue-500 p-2 md:p-4 rounded-xl">
+                     <Icon className="h-5 w-5 md:h-8 md:w-8 text-white" />
+                         </div>
 
                   </div>
                 </div>

@@ -686,7 +686,7 @@ export default function UsersManagement() {
         </h2>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
             <p className="text-3xl font-bold mb-1">
               {users.length}

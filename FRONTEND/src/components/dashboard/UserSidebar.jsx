@@ -73,6 +73,7 @@ export default function UserSidebar({ isOpen, onClose, user }) {
   const location = useLocation();
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const [locationNames, setLocationNames] = useState({
     village: "",
@@ -210,19 +211,22 @@ export default function UserSidebar({ isOpen, onClose, user }) {
     fetchUnreadCount();
   }, []);
 
-  // =========================================
   // LOGOUT
-  // =========================================
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  setShowLogoutConfirm(true);
+};
 
-    onClose();
+const confirmLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 
-    navigate("/", {
-      replace: true,
-    });
-  };
+  onClose();
+  setShowLogoutConfirm(false);
+
+  navigate("/", {
+    replace: true,
+  });
+};
 
   return (
     <>
@@ -387,6 +391,42 @@ export default function UserSidebar({ isOpen, onClose, user }) {
           </button>
         </div>
       </aside>
+
+      {showLogoutConfirm && (
+  <div className="fixed top-0 left-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-5">
+        <h2 className="text-xl font-bold">
+          Confirm Logout
+        </h2>
+      </div>
+
+      <div className="p-6">
+        <p className="text-gray-600 text-sm">
+          Are you sure you want to logout?
+        </p>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setShowLogoutConfirm(false)}
+            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-all font-semibold"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmLogout}
+            className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-all font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+)}
     </>
   );
 }

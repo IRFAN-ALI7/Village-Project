@@ -231,26 +231,23 @@ function HelpChat({ onClose }) {
   );
 }
 
-/* ══════════════════════════════════════════════════
+/*
 MAIN PAGE
-══════════════════════════════════════════════════ */
+*/
 
 export default function HomePage() {
   const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
 
-  // =========================
   // AUTH STATE
-  // =========================
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [dashboardPath, setDashboardPath] = useState('/dashboard');
 
-  // =========================
   // CHECK LOGIN STATUS
-  // =========================
 
   useEffect(() => {
     const checkAuth = () => {
@@ -303,21 +300,40 @@ export default function HomePage() {
     };
   }, []);
 
-  // =========================
   // LOGOUT
-  // =========================
+const handleLogout = () => {
+  setLogoutConfirm(true);
+};
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('admin');
-    localStorage.removeItem('adminName');
+const confirmLogout = () => {
+  const token = localStorage.getItem('token');
 
-    setIsLoggedIn(false);
-    setDashboardPath('/dashboard');
-    setMobileOpen(false);
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
 
-    navigate('/');
-  };
+      if (decoded.role === 'admin') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('admin');
+        localStorage.removeItem('adminName');
+      } else if (decoded.role === 'user') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      localStorage.removeItem('token');
+    }
+  }
+
+  setIsLoggedIn(false);
+  setDashboardPath('/dashboard');
+  setMobileOpen(false);
+  setLogoutConfirm(false);
+
+  navigate('/');
+};
 
   const scrollTo = (id) => {
     document
@@ -1077,6 +1093,42 @@ export default function HomePage() {
         </div>
 
       </footer>
+
+      {logoutConfirm && (
+  <div className="fixed top-0 left-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-5">
+        <h2 className="text-xl font-bold">
+          Confirm Logout
+        </h2>
+      </div>
+
+      <div className="p-6">
+        <p className="text-gray-600 text-sm">
+          Are you sure you want to logout?
+        </p>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setLogoutConfirm(false)}
+            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-all font-semibold"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmLogout}
+            className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-all font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+)}
 
       {/* ══ AI CHAT ══ */}
 

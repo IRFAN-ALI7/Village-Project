@@ -19,6 +19,7 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
@@ -204,20 +205,19 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
   };
 
   // LOGOUT
-  const handleLogout = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to logout?"
-    );
+const handleLogout = () => {
+  setShowProfileMenu(false);
+  setShowLogoutConfirm(true);
+};
 
-    if (!confirmed) return;
+const confirmLogout = () => {
+  localStorage.removeItem("token");
 
-    localStorage.removeItem("token");
+  setShowNotifications(false);
+  setShowLogoutConfirm(false);
 
-    setShowProfileMenu(false);
-    setShowNotifications(false);
-
-    navigate("/admin/login");
-  };
+  navigate("/admin/login");
+};
 
   // INITIALS
   const getInitials = () => {
@@ -290,7 +290,7 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm md:w-80 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+               <div className="fixed top-20 left-3 right-3 w-auto md:absolute md:top-auto md:left-auto md:right-0 md:mt-2 md:w-80 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
 
                   <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-4">
                     <h3 className="font-bold text-lg">
@@ -377,7 +377,7 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
                   PROFILE DROPDOWN
                */}
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-xs md:w-72 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="fixed top-20 left-3 right-3 w-auto md:absolute md:top-auto md:left-auto md:right-0 md:mt-2 md:w-72 bg-white rounded-2xl shadow-2xl overflow-hidden z-50">
 
                   {/* Profile Information */}
                   <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-6">
@@ -575,6 +575,43 @@ export default function AdminNavbar({ onMenuClick, pageTitle }) {
           </div>
         </div>
       )}
+
+      {/* LOGOUT CONFIRMATION MODAL */}
+{showLogoutConfirm && (
+  <div className="fixed top-0 left-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+
+      <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-5">
+        <h2 className="text-xl font-bold">
+          Confirm Logout
+        </h2>
+      </div>
+
+      <div className="p-6">
+        <p className="text-gray-600 text-sm">
+          Are you sure you want to logout?
+        </p>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setShowLogoutConfirm(false)}
+            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-all font-semibold"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmLogout}
+            className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-all font-semibold"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+)}
     </>
   );
 }

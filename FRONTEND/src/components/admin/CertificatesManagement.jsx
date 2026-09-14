@@ -506,7 +506,7 @@ export default function CertificatesManagement() {
 
 
                 {/* STATS */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                         <div className="flex items-center justify-between">
