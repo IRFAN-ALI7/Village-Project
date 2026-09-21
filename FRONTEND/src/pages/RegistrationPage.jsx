@@ -425,7 +425,9 @@ export default function RegistrationPage() {
     }
 
     if (otpCooldown > 0) {
-      showToast(`Please wait ${otpCooldown} seconds before requesting OTP again.`);
+      showToast(
+        `Please wait ${otpCooldown} seconds before requesting OTP again.`
+      );
       return;
     }
 
@@ -493,7 +495,9 @@ export default function RegistrationPage() {
       );
 
       setEmailVerified(true);
-      setEmailVerificationToken(response.data?.verificationToken || "");
+      setEmailVerificationToken(
+        response.data?.verificationToken || ""
+      );
       setShowEmailOtp(false);
       setEmailOtp("");
       setOtpCooldown(0);
@@ -1207,11 +1211,7 @@ export default function RegistrationPage() {
               }
               className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-lg hover:shadow-xl transition-all font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {registering
-                ? "Creating Account..."
-                : !emailVerified
-                ? "Verify Email to Create Account"
-                : "Create Account"}
+              {registering ? "Creating Account..." : "Create Account"}
             </button>
 
             <div className="text-center pt-4 border-t border-gray-200">
