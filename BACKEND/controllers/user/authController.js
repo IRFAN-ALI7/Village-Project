@@ -23,6 +23,11 @@ const OTP_EXPIRY_MS = OTP_EXPIRY_MINUTES * 60 * 1000;
 const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 
+// Temporary registration OTP storage.
+// Registration OTP data is kept outside the User document so that
+// no incomplete User document is created during registration.
+const registrationOtpStore = new Map();
+
 
 // Generate 6 digit OTP
 const generateOtp = () => {
@@ -294,6 +299,7 @@ const sendOtpEmail = async ({
 
 </td>
 </tr>
+
 </table>
 
 </body>
@@ -637,74 +643,49 @@ const requestRegistrationOtp = async (req, res) => {
         );
     }
 
-    // Check existing user
-    let user = await User.findOne({
+    // Check existing completed user
+    const existingUser = await User.findOne({
         email,
+        registrationStatus: "completed",
     });
 
-  
-    // Already registered
-    if (user && user.registrationStatus === "completed") {
+    if (existingUser) {
         throw new expressError(
             400,
             "This email already registered!"
         );
     }
 
-    // Existing pending registration
-    if (user && user.registrationStatus === "pending") {
+    // Check resend cooldown from temporary registration data
+    const existingRegistration = registrationOtpStore.get(email);
 
-        // Resend cooldown
-        if (
-            user.emailOtpLastSentAt &&
-            Date.now() - user.emailOtpLastSentAt.getTime() <
-                OTP_RESEND_COOLDOWN_MS
-        ) {
-            const remainingSeconds = Math.ceil(
-                (
-                    OTP_RESEND_COOLDOWN_MS -
-                    (Date.now() - user.emailOtpLastSentAt.getTime())
-                ) / 1000
-            );
+    if (
+        existingRegistration &&
+        existingRegistration.emailOtpLastSentAt &&
+        Date.now() - existingRegistration.emailOtpLastSentAt <
+            OTP_RESEND_COOLDOWN_MS
+    ) {
+        const remainingSeconds = Math.ceil(
+            (
+                OTP_RESEND_COOLDOWN_MS -
+                (Date.now() - existingRegistration.emailOtpLastSentAt)
+            ) / 1000
+        );
 
-            throw new expressError(
-                429,
-                `Please wait ${remainingSeconds} seconds before requesting another OTP.`
-            );
-        }
-
-    } else {
-
-        // Create pending User
-        user = new User({
-            email,
-            emailVerified: false,
-
-            registrationStatus: "pending",
-
-            status: "inactive",
-        });
+        throw new expressError(
+            429,
+            `Please wait ${remainingSeconds} seconds before requesting another OTP.`
+        );
     }
 
     // Generate OTP
     const otp = generateOtp();
 
-    user.emailOtp = hashOtp(otp);
-
-    user.emailOtpExpiresAt = new Date(
-        Date.now() + OTP_EXPIRY_MS
-    );
-
-    user.emailOtpPurpose = "registration";
-
-    user.emailOtpAttempts = 0;
-
-    user.emailOtpLastSentAt = new Date();
-
-    user.emailVerified = false;
-
-    await user.save({
-        validateBeforeSave: false,
+    registrationOtpStore.set(email, {
+        emailOtp: hashOtp(otp),
+        emailOtpExpiresAt: Date.now() + OTP_EXPIRY_MS,
+        emailOtpAttempts: 0,
+        emailOtpLastSentAt: Date.now(),
     });
 
     // Send Email
@@ -712,23 +693,15 @@ const requestRegistrationOtp = async (req, res) => {
 
         await sendOtpEmail({
             email,
-            name: user.name || "User",
+            name: "User",
             otp,
             purpose: "registration",
         });
 
     } catch (error) {
 
-        // Remove OTP if email failed
-        user.emailOtp = null;
-        user.emailOtpExpiresAt = null;
-        user.emailOtpPurpose = null;
-        user.emailOtpAttempts = 0;
-        user.emailOtpLastSentAt = null;
-
-        await user.save({
-            validateBeforeSave: false,
-        });
+        // Remove registration OTP if email failed
+        registrationOtpStore.delete(email);
 
         throw new expressError(
             500,
@@ -771,13 +744,9 @@ const verifyRegistrationOtp = async (req, res) => {
         );
     }
 
-    const user = await User.findOne({
-        email,
-        registrationStatus: "pending",
-        emailOtpPurpose: "registration",
-    });
+    const registration = registrationOtpStore.get(email);
 
-    if (!user) {
+    if (!registration) {
         throw new expressError(
             404,
             "Registration request not found. Please request a new OTP."
@@ -786,18 +755,11 @@ const verifyRegistrationOtp = async (req, res) => {
 
     // OTP expiry
     if (
-        !user.emailOtpExpiresAt ||
-        user.emailOtpExpiresAt.getTime() < Date.now()
+        !registration.emailOtpExpiresAt ||
+        registration.emailOtpExpiresAt < Date.now()
     ) {
 
-        user.emailOtp = null;
-        user.emailOtpExpiresAt = null;
-        user.emailOtpPurpose = null;
-        user.emailOtpAttempts = 0;
-
-        await user.save({
-            validateBeforeSave: false,
-        });
+        registrationOtpStore.delete(email);
 
         throw new expressError(
             400,
@@ -806,16 +768,9 @@ const verifyRegistrationOtp = async (req, res) => {
     }
 
     // Max attempts
-    if (user.emailOtpAttempts >= MAX_OTP_ATTEMPTS) {
+    if (registration.emailOtpAttempts >= MAX_OTP_ATTEMPTS) {
 
-        user.emailOtp = null;
-        user.emailOtpExpiresAt = null;
-        user.emailOtpPurpose = null;
-        user.emailOtpAttempts = 0;
-
-        await user.save({
-            validateBeforeSave: false,
-        });
+        registrationOtpStore.delete(email);
 
         throw new expressError(
             429,
@@ -826,27 +781,16 @@ const verifyRegistrationOtp = async (req, res) => {
     // Compare OTP
     const hashedOtp = hashOtp(otp);
 
-    if (hashedOtp !== user.emailOtp) {
+    if (hashedOtp !== registration.emailOtp) {
 
-        user.emailOtpAttempts += 1;
-
-        await user.save({
-            validateBeforeSave: false,
-        });
+        registration.emailOtpAttempts += 1;
 
         const remainingAttempts =
-            MAX_OTP_ATTEMPTS - user.emailOtpAttempts;
+            MAX_OTP_ATTEMPTS - registration.emailOtpAttempts;
 
         if (remainingAttempts <= 0) {
 
-            user.emailOtp = null;
-            user.emailOtpExpiresAt = null;
-            user.emailOtpPurpose = null;
-            user.emailOtpAttempts = 0;
-
-            await user.save({
-                validateBeforeSave: false,
-            });
+            registrationOtpStore.delete(email);
 
             throw new expressError(
                 429,
@@ -861,22 +805,25 @@ const verifyRegistrationOtp = async (req, res) => {
     }
 
     // OTP verified
-    user.emailVerified = true;
+    registrationOtpStore.delete(email);
 
-    user.emailOtp = null;
-    user.emailOtpExpiresAt = null;
-    user.emailOtpPurpose = null;
-    user.emailOtpAttempts = 0;
-    user.emailOtpLastSentAt = null;
-
-    await user.save({
-        validateBeforeSave: false,
-    });
+    // Generate short-lived registration verification token
+    const verificationToken = jwt.sign(
+        {
+            email,
+            purpose: "user-registration-email-verification",
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: "10m",
+        }
+    );
 
     res.status(200).json({
         success: true,
         message: "Email verified successfully.",
         emailVerified: true,
+        verificationToken,
     });
 };
 
@@ -900,6 +847,7 @@ const registerUser = async (req, res) => {
         subDistrict,
         panchayat,
         village,
+        verificationToken,
     } = req.body;
 
     // Basic validation
@@ -917,6 +865,13 @@ const registerUser = async (req, res) => {
         );
     }
 
+    if (!verificationToken) {
+        throw new expressError(
+            400,
+            "Please verify your email before creating your account."
+        );
+    }
+
     if (
         !state ||
         !district ||
@@ -930,6 +885,59 @@ const registerUser = async (req, res) => {
         );
     }
 
+    // Verify registration token
+    let decodedVerificationToken;
+
+    try {
+
+        decodedVerificationToken = jwt.verify(
+            verificationToken,
+            process.env.JWT_SECRET
+        );
+
+    } catch (error) {
+
+        throw new expressError(
+            401,
+            "Invalid or expired email verification token"
+        );
+    }
+
+    if (
+        decodedVerificationToken.purpose !==
+            "user-registration-email-verification"
+    ) {
+        throw new expressError(
+            401,
+            "Invalid email verification token"
+        );
+    }
+
+    const normalizedEmail =
+        email.trim().toLowerCase();
+
+    if (
+        decodedVerificationToken.email !==
+        normalizedEmail
+    ) {
+        throw new expressError(
+            401,
+            "Email verification does not match the registered email."
+        );
+    }
+
+    // Check email is not already registered
+    const existingEmailUser = await User.findOne({
+        email: normalizedEmail,
+        registrationStatus: "completed",
+    });
+
+    if (existingEmailUser) {
+        throw new expressError(
+            400,
+            "This email already registered!"
+        );
+    }
 
     // Convert location values
     const stateCode = Number(state);
@@ -1020,46 +1028,9 @@ const registerUser = async (req, res) => {
         );
     }
 
-    // Normalize email
-    const normalizedEmail =
-        email.trim().toLowerCase();
-
-  
-    // Find pending registration
-    const user = await User.findOne({
-        email: normalizedEmail,
-    });
-
-    if (!user) {
-        throw new expressError(
-            400,
-            "Please verify your email before creating your account."
-        );
-    }
-
-
-    // Email verification check
-    if (!user.emailVerified) {
-        throw new expressError(
-            400,
-            "Please verify your email to create your account."
-        );
-    }
-
-    // Registration status
-    if (user.registrationStatus === "completed") {
-        throw new expressError(
-            400,
-            "This email already registered!"
-        );
-    }
-
     // Check mobile
     const existingMobileUser = await User.findOne({
         mobile,
-        _id: {
-            $ne: user._id,
-        },
     });
 
     if (existingMobileUser) {
@@ -1069,54 +1040,49 @@ const registerUser = async (req, res) => {
         );
     }
 
-    // Fill User
-    user.name = req.body.name;
+    // Create User
+    const user = new User({
+        name: req.body.name,
+        mobile,
+        email: normalizedEmail,
+        emailVerified: true,
+        address: req.body.address,
 
-    user.mobile = mobile;
+        // State
+        state: "Jharkhand",
+        stateCode,
 
-    user.address = req.body.address;
+        // District
+        district: districtData.districtName,
+        districtCode,
 
-    // State
-    user.state = "Jharkhand";
-    user.stateCode = stateCode;
+        // Sub-District
+        subDistrict:
+            subDistrictData.subDistrictName,
+        subDistrictCode,
 
-    // District
-    user.district = districtData.districtName;
-    user.districtCode = districtCode;
+        // Panchayat
+        panchayat:
+            panchayatData.panchayatName,
+        panchayatCode,
 
-    // Sub-District
-    user.subDistrict =
-        subDistrictData.subDistrictName;
+        // Village
+        village:
+            villageData.villageName,
+        villageCode,
 
-    user.subDistrictCode =
-        subDistrictCode;
+        // Other details
+        pincode: req.body.pincode,
+        postOffice: req.body.postOffice,
+        policeStation: req.body.policeStation,
 
-    // Panchayat
-    user.panchayat =
-        panchayatData.panchayatName;
+        // Password
+        password: req.body.password,
 
-    user.panchayatCode =
-        panchayatCode;
-
-    // Village
-    user.village =
-        villageData.villageName;
-
-    user.villageCode =
-        villageCode;
-
-    // Other details
-    user.pincode = req.body.pincode;
-    user.postOffice = req.body.postOffice;
-    user.policeStation = req.body.policeStation;
-
-    // Password
-    user.password = req.body.password;
-
-    // Registration completed
-    user.registrationStatus = "completed";
-
-    user.status = "active";
+        // Registration completed
+        registrationStatus: "completed",
+        status: "active",
+    });
 
     // Profile image
     if (req.file) {
@@ -1210,6 +1176,7 @@ const registerUser = async (req, res) => {
     });
 };
 
+
 // USER LOGIN
 const loginUser = async (req, res) => {
 
@@ -1279,7 +1246,6 @@ const loginUser = async (req, res) => {
         status: "completed",
     });
 
- 
     // JWT
     const token = jwt.sign(
         {
@@ -1353,20 +1319,20 @@ const updateUsers = async (req, res) => {
 
 
     // Profile image
-   if (req.file) {
-    // Delete old image from Cloudinary
-    if (user.profileImagePublicId) {
-        await cloudinary.uploader.destroy(
-            user.profileImagePublicId
-        );
+    if (req.file) {
+        // Delete old image from Cloudinary
+        if (user.profileImagePublicId) {
+            await cloudinary.uploader.destroy(
+                user.profileImagePublicId
+            );
+        }
+
+        // Save new image details
+        req.body.profileImage = req.file.path;
+        req.body.profileImagePublicId = req.file.filename;
     }
 
-    // Save new image details
-    req.body.profileImage = req.file.path;
-    req.body.profileImagePublicId = req.file.filename;
-}
 
-    
     // LOCATION FIELDS MUST NEVER BE EDITABLE
     delete req.body.state;
     delete req.body.stateCode;
@@ -1525,7 +1491,7 @@ const requestEmailChange = async (req, res) => {
         );
     }
 
-   
+
     // Resend cooldown
     if (
         user.emailOtpPurpose === "email-change" &&
@@ -1765,7 +1731,7 @@ const deleteUsers = async (req, res) => {
         );
     }
 
-  
+
     // Admin notification
     await Activity.create({
         audience: "admin",
@@ -1792,7 +1758,7 @@ const deleteUsers = async (req, res) => {
         status: "completed",
     });
 
-    
+
     // Delete user's complaints
     await Complaint.deleteMany({
         userId: req.userId,
@@ -1805,11 +1771,11 @@ const deleteUsers = async (req, res) => {
     });
 
     // Delete user's profile image from Cloudinary
-      if (user.profileImagePublicId) {
-       await cloudinary.uploader.destroy(
-        user.profileImagePublicId
-      );
-   }
+    if (user.profileImagePublicId) {
+        await cloudinary.uploader.destroy(
+            user.profileImagePublicId
+        );
+    }
 
 
     // Delete user account
@@ -1942,7 +1908,7 @@ const forgotPassword = async (req, res) => {
         );
     }
 
-    
+
     // Resend cooldown
     if (
         user.emailOtpPurpose === "forgot-password" &&
@@ -1967,7 +1933,7 @@ const forgotPassword = async (req, res) => {
         );
     }
 
- 
+
     // Generate OTP
     const otp = generateOtp();
     user.emailOtp = hashOtp(otp);
@@ -2082,6 +2048,7 @@ const verifyForgotPasswordOtp = async (req, res) => {
         );
     }
 
+
     // Attempts
     if (
         user.emailOtpAttempts >= MAX_OTP_ATTEMPTS
@@ -2100,7 +2067,7 @@ const verifyForgotPasswordOtp = async (req, res) => {
         );
     }
 
-    
+
     // Compare OTP
     const hashedOtp = hashOtp(otp);
 
@@ -2239,7 +2206,7 @@ const resetPassword = async (req, res) => {
         );
     }
 
-    
+
     // Find user
     // ----------------------------------------------------------
     const user = await User.findById(
@@ -2253,7 +2220,7 @@ const resetPassword = async (req, res) => {
         );
     }
 
-    
+
     // Set new password
     user.password = newPassword;
 
@@ -2283,6 +2250,7 @@ const resetPassword = async (req, res) => {
             "Password reset successfully!",
     });
 };
+
 
 // EXPORTS
 module.exports = {

@@ -112,6 +112,7 @@ export default function RegistrationPage() {
   // ── Email OTP State ────────────────────────────────────────────────────────
 
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationToken, setEmailVerificationToken] = useState("");
   const [showEmailOtp, setShowEmailOtp] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
   const [otpCooldown, setOtpCooldown] = useState(0);
@@ -402,6 +403,7 @@ export default function RegistrationPage() {
 
     // Email changed → previous verification is no longer valid
     setEmailVerified(false);
+    setEmailVerificationToken("");
     setShowEmailOtp(false);
     setEmailOtp("");
     setOtpCooldown(0);
@@ -491,6 +493,7 @@ export default function RegistrationPage() {
       );
 
       setEmailVerified(true);
+      setEmailVerificationToken(response.data?.verificationToken || "");
       setShowEmailOtp(false);
       setEmailOtp("");
       setOtpCooldown(0);
@@ -528,7 +531,7 @@ export default function RegistrationPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!emailVerified) {
+    if (!emailVerified || !emailVerificationToken) {
       showToast("Please verify your email before creating your account.");
       return;
     }
@@ -556,6 +559,7 @@ export default function RegistrationPage() {
       data.append("postOffice", formData.postOffice);
       data.append("policeStation", formData.policeStation);
       data.append("password", formData.password);
+      data.append("verificationToken", emailVerificationToken);
 
       // Profile Image
       if (profileImageFile) {
@@ -1196,7 +1200,11 @@ export default function RegistrationPage() {
 
             <button
               type="submit"
-              disabled={registering || !emailVerified}
+              disabled={
+                registering ||
+                !emailVerified ||
+                !emailVerificationToken
+              }
               className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-lg hover:shadow-xl transition-all font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {registering

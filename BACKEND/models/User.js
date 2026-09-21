@@ -3,23 +3,17 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-
     // PERSONAL INFORMATION
     name: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     mobile: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       unique: true,
-      sparse: true,
       match: /^[0-9]{10}$/,
     },
 
@@ -95,126 +89,96 @@ const userSchema = new mongoose.Schema(
     },
 
     profileImagePublicId: {
-    type: String,
-     default: "",
-   },
+      type: String,
+      default: "",
+    },
 
     address: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     // LOCATION
     state: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     stateCode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
     },
 
     district: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     districtCode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
     },
 
     subDistrict: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     subDistrictCode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
     },
 
     panchayat: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     panchayatCode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
     },
 
     village: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     villageCode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
     },
 
     // ADDRESS DETAILS
     pincode: {
       type: Number,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       min: 100000,
       max: 999999,
     },
 
     postOffice: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     policeStation: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       trim: true,
     },
 
     // AUTHENTICATION
     password: {
       type: String,
-      required: function () {
-        return this.registrationStatus !== "pending";
-      },
+      required: true,
       minlength: 6,
     },
 
@@ -228,7 +192,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
 
 // HASH PASSWORD
 userSchema.pre("save", async function () {

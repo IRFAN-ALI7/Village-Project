@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const app = express();
 const connectDB = require("./config/db");
+const cors = require("cors");
 
 //admin routes
 const adminAuthRoutes = require("./routes/admin/authRoutes");
@@ -31,7 +32,6 @@ const superAdminNoticeRoutes = require("./routes/superAdmin/noticeRoutes");
 const activityRoutes = require("./routes/activityRoute");
 const locationRoutes = require("./routes/locationRoutes");
 
-const cors = require("cors");
 const port = process.env.PORT;
 connectDB();
 app.use(express.json());
