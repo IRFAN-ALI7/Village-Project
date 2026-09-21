@@ -36,6 +36,8 @@ const userSchema = Joi.object({
     .min(6)
     .required(),
 
+  verificationToken: Joi.string().required(),
+
   status: Joi.string().valid("active", "inactive"),
 
   profileImage: Joi.string()
