@@ -53,9 +53,10 @@ export default function SuperAdminLayout({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // =====================================================
+  // LOGOUT MODAL
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   // SUPER ADMIN PROFILE IMAGE
-  // =====================================================
 
   const [profileImage, setProfileImage] = useState("");
 
@@ -99,10 +100,15 @@ export default function SuperAdminLayout({
     location.pathname === path ||
     location.pathname.startsWith(path + "/");
 
+  // OPEN LOGOUT MODAL
   const handleLogout = () => {
-    if (confirm("Are you sure you want to logout?")) {
-      navigate("/super-admin/login");
-    }
+    setShowLogoutModal(true);
+  };
+
+  // CONFIRM LOGOUT
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    navigate("/super-admin/login");
   };
 
   const Sidebar = (
@@ -127,7 +133,7 @@ export default function SuperAdminLayout({
 
         <button
           onClick={() => setSidebarOpen(false)}
-          className="p-1.5 rounded-lg text-indigo-400 hover hover transition-colors shrink-0"
+          className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-900 hover:text-white transition-colors shrink-0"
         >
           <X className="h-4 w-4" />
         </button>
@@ -267,6 +273,65 @@ export default function SuperAdminLayout({
           {children}
         </main>
       </div>
+
+      {/* LOGOUT CONFIRMATION MODAL*/}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowLogoutModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-blue-600 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
+                  <LogOut className="h-5 w-5 text-white" />
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    Confirm Logout
+                  </h2>
+
+                  <p className="text-sm text-white/80 mt-0.5">
+                    Super Admin
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Are you sure you want to logout?
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
